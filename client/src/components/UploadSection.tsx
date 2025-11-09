@@ -234,7 +234,7 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onUploadComplete, onUnsav
         ...mini,
         ...(batchGame && { game: batchGame }),
         ...(batchAmount && { amount: batchAmount }),
-        ...(batchKeywords && { keywords: normalizeKeywords(batchKeywords) }),
+        ...(batchKeywords && { keywords: batchKeywords }),
         painted: batchPainted,
       }))
     );
@@ -247,9 +247,7 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onUploadComplete, onUnsav
 
   const handleSingleUpdate = (id: string, field: keyof MiniatureForm, value: any) => {
     setMiniatures(prev =>
-      prev.map(mini =>
-        mini.id === id ? { ...mini, [field]: field === 'keywords' ? normalizeKeywords(value) : value } : mini
-      )
+      prev.map(mini => (mini.id === id ? { ...mini, [field]: value } : mini))
     );
   };
 
@@ -279,7 +277,13 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onUploadComplete, onUnsav
 
     try {
       setSaving(true);
-      await api.createMiniatures(miniatures);
+      // Normalize keywords for all miniatures before sending to API
+      const payload = miniatures.map(m => ({
+        ...m,
+        keywords: normalizeKeywords(m.keywords),
+      }));
+
+      await api.createMiniatures(payload);
       
   // Reset state
   setUploadedFiles([]);
