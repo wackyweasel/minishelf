@@ -1,0 +1,52 @@
+.autocomplete-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.autocomplete-suggestions {
+  position: fixed;
+  background: #23272a;
+  border: 1px solid rgba(59, 67, 74, 0.5);
+  border-radius: 8px;
+  margin-top: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 10000;
+  box-shadow: 0 8px 28px rgba(13, 18, 20, 0.5);
+  min-width: 200px;
+}
+
+.suggestion-item {
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  color: #dfeffb;
+  transition: all 0.18s ease;
+  border-bottom: 1px solid rgba(59, 67, 74, 0.5);
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.suggestion-item:hover,
+.suggestion-item.active {
+  background: rgba(127, 179, 213, 0.06);
+  color: #7fb3d5;
+}
+
+.autocomplete-suggestions::-webkit-scrollbar {
+  width: 6px;
+}
+
+.autocomplete-suggestions::-webkit-scrollbar-track {
+  background: #23272a;
+}
+
+.autocomplete-suggestions::-webkit-scrollbar-thumb {
+  background: rgba(59, 67, 74, 0.55);
+  border-radius: 3px;
+}
+
+.autocomplete-suggestions::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 67, 74, 0.7);
+}
