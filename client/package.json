@@ -4,9 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
+  "dev": "vite",
+  "build": "tsc && vite build",
+  "build:prod": "vite build",
+  "preview": "vite preview"
   },
   "dependencies": {
     "axios": "^1.6.5",
