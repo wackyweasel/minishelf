@@ -31,6 +31,43 @@ async function fileToBase64(file: File): Promise<string> {
   });
 }
 
+// Helper function to resize image to max dimensions
+async function resizeImage(base64Image: string, maxWidth: number = 512, maxHeight: number = 512, quality: number = 0.85): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      let width = img.width;
+      let height = img.height;
+      
+      // Calculate new dimensions while maintaining aspect ratio
+      if (width > maxWidth || height > maxHeight) {
+        const ratio = Math.min(maxWidth / width, maxHeight / height);
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
+      }
+      
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        reject(new Error('Could not get canvas context'));
+        return;
+      }
+      
+      // Use better image smoothing
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = reject;
+    img.src = base64Image;
+  });
+}
+
 // Helper function to create thumbnail from image
 async function createThumbnail(base64Image: string, maxWidth: number = 200): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -47,6 +84,8 @@ async function createThumbnail(base64Image: string, maxWidth: number = 200): Pro
         return;
       }
       
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       resolve(canvas.toDataURL('image/jpeg', 0.7));
     };
@@ -69,8 +108,13 @@ export const api = {
       console.log('Processing file:', file.name, 'size:', file.size);
       
       // Convert to base64
-      const base64Data = await fileToBase64(file);
-      console.log('Base64 conversion complete, length:', base64Data.length, 'preview:', base64Data.substring(0, 50));
+      const base64Original = await fileToBase64(file);
+      console.log('Base64 conversion complete, original length:', base64Original.length);
+      
+      // Resize to max 512x512 to save space
+      const base64Data = await resizeImage(base64Original, 512, 512, 0.85);
+      console.log('Image resized, new length:', base64Data.length, 'reduction:', 
+        Math.round((1 - base64Data.length / base64Original.length) * 100) + '%');
       
       // Create thumbnail
       let thumbnailData: string | null = null;
