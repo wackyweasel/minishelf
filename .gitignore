@@ -9,3 +9,4 @@ uploads/
 .vscode/
 client/dist/
 client/node_modules/
+gh-token.txt

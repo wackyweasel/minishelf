@@ -60,17 +60,23 @@ export const api = {
   uploadImages: async (files: File[], onProgress?: (loaded: number, total: number) => void): Promise<UploadedFile[]> => {
     const uploadedFiles: UploadedFile[] = [];
     
+    console.log('uploadImages called with', files.length, 'files');
+    
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       const id = crypto.randomUUID();
       
+      console.log('Processing file:', file.name, 'size:', file.size);
+      
       // Convert to base64
       const base64Data = await fileToBase64(file);
+      console.log('Base64 conversion complete, length:', base64Data.length, 'preview:', base64Data.substring(0, 50));
       
       // Create thumbnail
       let thumbnailData: string | null = null;
       try {
         thumbnailData = await createThumbnail(base64Data);
+        console.log('Thumbnail created, length:', thumbnailData?.length);
       } catch (error) {
         console.warn('Could not create thumbnail:', error);
       }
@@ -89,6 +95,7 @@ export const api = {
       }
     }
     
+    console.log('Upload complete, returning', uploadedFiles.length, 'files');
     return uploadedFiles;
   },
 

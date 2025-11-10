@@ -168,7 +168,8 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onUploadComplete, onUnsav
               amount: m.amount || 1,
               painted: !!m.painted,
               keywords: m.keywords || '',
-              image_path: m.image_path || '',
+              image_data: m.image_data || m.image?.data || '',
+              thumbnail_data: m.thumbnail_data || null,
               rotation: 0,
             }));
             setMiniatures(imports);
@@ -287,7 +288,18 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onUploadComplete, onUnsav
         keywords: normalizeKeywords(m.keywords),
       }));
 
+      console.log('Saving miniatures, count:', payload.length);
+      console.log('First miniature sample:', {
+        id: payload[0]?.id,
+        name: payload[0]?.name,
+        hasImageData: !!payload[0]?.image_data,
+        imageDataLength: payload[0]?.image_data?.length,
+        imageDataPreview: payload[0]?.image_data?.substring(0, 50)
+      });
+
       await api.createMiniatures(payload);
+      
+      console.log('Miniatures saved successfully');
       
   // Reset state
   setUploadedFiles([]);
@@ -410,7 +422,7 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onUploadComplete, onUnsav
               <div key={mini.id} className="miniature-form-card">
                 <div className="form-card-image">
                   <img 
-                    src={mini.image_path} 
+                    src={mini.thumbnail_data || mini.image_data} 
                     alt={`Upload ${index + 1}`}
                     style={{ transform: `rotate(${mini.rotation}deg)` }}
                   />

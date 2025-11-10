@@ -181,6 +181,13 @@ export async function createMiniature(miniature: Partial<Miniature>): Promise<st
   const id = miniature.id || crypto.randomUUID();
   const now = new Date().toISOString();
   
+  console.log('Creating miniature:', {
+    id,
+    hasImageData: !!miniature.image_data,
+    imageDataLength: miniature.image_data?.length || 0,
+    hasThumbnail: !!miniature.thumbnail_data
+  });
+  
   db!.run(
     `INSERT INTO miniatures (id, game, name, amount, painted, keywords, image_data, thumbnail_data, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -238,7 +245,7 @@ export async function getAllMiniatures(filters?: {
   const results: Miniature[] = [];
   while (stmt.step()) {
     const row = stmt.getAsObject();
-    results.push({
+    const mini = {
       id: row.id as string,
       game: row.game as string,
       name: row.name as string,
@@ -249,7 +256,14 @@ export async function getAllMiniatures(filters?: {
       thumbnail_data: row.thumbnail_data as string | null,
       created_at: row.created_at as string,
       updated_at: row.updated_at as string,
+    };
+    console.log('Retrieved miniature:', {
+      id: mini.id,
+      name: mini.name,
+      hasImageData: !!mini.image_data,
+      imageDataPreview: mini.image_data?.substring(0, 50)
     });
+    results.push(mini);
   }
   stmt.free();
 
