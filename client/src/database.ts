@@ -228,12 +228,20 @@ export async function getAllMiniatures(filters?: {
   }
 
   if (filters?.search) {
-    // Search in keywords - split by comma and search for all terms
+    // Search in keywords, game name, and miniature name
+    // Split by comma for keyword search (all terms must match)
     const searchTerms = filters.search.toLowerCase().split(',').map(s => s.trim()).filter(s => s);
     if (searchTerms.length > 0) {
-      const keywordConditions = searchTerms.map(() => 'LOWER(keywords) LIKE ?').join(' AND ');
-      query += ` AND (${keywordConditions})`;
-      searchTerms.forEach(term => params.push(`%${term}%`));
+      // For each search term, check if it appears in keywords OR game OR name
+      const conditions = searchTerms.map(() => 
+        '(LOWER(keywords) LIKE ? OR LOWER(game) LIKE ? OR LOWER(name) LIKE ?)'
+      ).join(' AND ');
+      query += ` AND (${conditions})`;
+      searchTerms.forEach(term => {
+        params.push(`%${term}%`); // keywords
+        params.push(`%${term}%`); // game
+        params.push(`%${term}%`); // name
+      });
     }
   }
 
