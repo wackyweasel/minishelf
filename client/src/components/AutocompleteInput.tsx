@@ -48,15 +48,34 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
   };
 
   useEffect(() => {
-    if (value && suggestions.length > 0 && isFocused) {
+    if (suggestions.length > 0 && isFocused) {
       const { currentKeyword } = getCurrentKeyword(value);
-      const searchTerm = currentKeyword || value;
-      
-      const filtered = suggestions.filter(s =>
-        s.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      const searchTerm = currentKeyword || '';
+
+      // Detect if the character immediately before the caret is a comma or comma+space
+      let lastCharIsComma = false;
+      try {
+        const cursorPosition = inputRef.current?.selectionStart ?? value.length;
+        const before = value.substring(0, cursorPosition);
+        if (before.length > 0) {
+          const last = before.charAt(before.length - 1);
+          const secondLast = before.length > 1 ? before.charAt(before.length - 2) : '';
+          if (last === ',') lastCharIsComma = true;
+          else if (last === ' ' && secondLast === ',') lastCharIsComma = true;
+        }
+      } catch (e) {
+        // ignore
+      }
+
+      // If this is a keyword field and the current keyword is empty OR the last char before caret is a comma,
+      // show all suggestions. Otherwise filter by the current keyword.
+      const filtered = (isKeywordField && (searchTerm === '' || lastCharIsComma))
+        ? suggestions.slice()
+        : suggestions.filter(s =>
+            s.toLowerCase().includes(searchTerm.toLowerCase())
+          );
       setFilteredSuggestions(filtered);
-      setShowSuggestions(filtered.length > 0 && searchTerm !== '');
+      setShowSuggestions(filtered.length > 0 && (searchTerm !== '' || isKeywordField || lastCharIsComma));
     } else {
       setFilteredSuggestions([]);
       setShowSuggestions(false);
@@ -118,22 +137,50 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
       // For keyword fields, replace the current keyword being typed
       const { beforeCursor, afterCursor } = getCurrentKeyword(value);
       const lastCommaIndex = beforeCursor.lastIndexOf(',');
-      
-      let newValue: string;
+
+      let prefix: string;
       if (lastCommaIndex >= 0) {
-        // There are previous keywords
-        const prefix = beforeCursor.substring(0, lastCommaIndex + 1) + ' ';
-        newValue = prefix + suggestion + (afterCursor.trim() ? ', ' + afterCursor.trim() : '');
+        // Keep everything up to and including the last comma and a space
+        prefix = beforeCursor.substring(0, lastCommaIndex + 1);
+        // ensure single space after comma
+        if (!prefix.endsWith(', ')) prefix = prefix + ' ';
       } else {
-        // This is the first keyword
-        newValue = suggestion + (afterCursor.trim() ? ', ' + afterCursor.trim() : '');
+        prefix = '';
       }
-      
+
+      // Insert the suggestion followed by a comma and space
+      const insertion = suggestion + ', ';
+      const newValue = prefix + insertion + afterCursor.trim();
+
       onChange(newValue);
+
+      // After updating the value, put focus back into input and move caret after the inserted text
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+          const caretPos = (prefix + insertion).length;
+          inputRef.current.setSelectionRange(caretPos, caretPos);
+        }
+      }, 0);
     }
-    setShowSuggestions(false);
-    setActiveSuggestionIndex(-1);
-    setIsFocused(false);
+    if (!isKeywordField) {
+      // Non-keyword fields: hide suggestions and blur
+      setShowSuggestions(false);
+      setActiveSuggestionIndex(-1);
+      setIsFocused(false);
+    } else {
+      // Keyword field: keep suggestions visible (full list) so user can click more
+      const full = suggestions.slice();
+      setFilteredSuggestions(full);
+      setShowSuggestions(full.length > 0);
+      setActiveSuggestionIndex(-1);
+      setIsFocused(true);
+
+      // ensure the input's position is recalculated by the effect that watches showSuggestions
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }
   };
 
   const handleFocus = () => {
@@ -194,6 +241,7 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
             <div
               key={index}
               className={`suggestion-item ${index === activeSuggestionIndex ? 'active' : ''}`}
+              onMouseDown={(e) => { e.preventDefault(); }}
               onClick={() => handleSuggestionClick(suggestion)}
             >
               {suggestion}
