@@ -73,55 +73,19 @@ const Gallery: React.FC<GalleryProps> = ({
           onClearSelection={onClearSelection}
           onDeleteSelected={onDeleteSelected}
           onExportSelected={async () => {
-            // Build export data and include image data URIs for each selected miniature
+            // Build export data with image data already in base64
             const selected = miniatures.filter(m => selectedIds.has(m.id));
 
-            // Helper to fetch image and convert to data URL
-            const toDataUrl = (url: string) => new Promise<string>(async (resolve, reject) => {
-              try {
-                const r = await fetch(url);
-                const blob = await r.blob();
-                const reader = new FileReader();
-                reader.onerror = () => reject(new Error('Failed reading blob'));
-                reader.onload = () => resolve(reader.result as string);
-                reader.readAsDataURL(blob);
-              } catch (err) {
-                reject(err);
-              }
-            });
-
-            const exportData = [] as any[];
-
-            for (const m of selected) {
-              const imageUrl = m.image_path + (m.image_path.includes('?') ? `&t=${cacheTimestamp}` : `?t=${cacheTimestamp}`);
-              try {
-                const dataUrl = await toDataUrl(imageUrl);
-                // derive filename from path
-                const parts = m.image_path.split('/');
-                const filename = parts[parts.length - 1] || `${m.id}.jpg`;
-                exportData.push({
-                  id: m.id,
-                  game: m.game,
-                  name: m.name,
-                  amount: m.amount,
-                  painted: m.painted,
-                  keywords: m.keywords,
-                  image: { filename, data: dataUrl },
-                });
-              } catch (err) {
-                console.error('Failed to fetch image for export', m.id, err);
-                // Fallback: export without image data, include image_path
-                exportData.push({
-                  id: m.id,
-                  game: m.game,
-                  name: m.name,
-                  amount: m.amount,
-                  painted: m.painted,
-                  keywords: m.keywords,
-                  image_path: m.image_path,
-                });
-              }
-            }
+            const exportData = selected.map(m => ({
+              id: m.id,
+              game: m.game,
+              name: m.name,
+              amount: m.amount,
+              painted: m.painted,
+              keywords: m.keywords,
+              image_data: m.image_data,
+              thumbnail_data: m.thumbnail_data,
+            }));
 
             const blob = new Blob([JSON.stringify({ miniatures: exportData }, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
@@ -151,7 +115,7 @@ const Gallery: React.FC<GalleryProps> = ({
                 )}
                 <div className="card-image-container">
                   <img
-                    src={`${mini.image_path}?t=${cacheTimestamp}`}
+                    src={mini.thumbnail_data || mini.image_data}
                     alt={mini.name || 'Miniature'}
                     className="card-image"
                   />
@@ -175,7 +139,7 @@ const Gallery: React.FC<GalleryProps> = ({
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      setPreviewImage(`${mini.image_path}?t=${cacheTimestamp}`);
+                      setPreviewImage(mini.image_data);
                     }}
                     aria-label={`View ${mini.name || 'miniature'}`}
                     type="button"
@@ -243,10 +207,10 @@ const Gallery: React.FC<GalleryProps> = ({
               >
                 <div className="col-img">
                   <div className="mini-img-wrap">
-                    <img src={`${mini.image_path}?t=${cacheTimestamp}`} alt={mini.name || 'Miniature'} />
+                    <img src={mini.thumbnail_data || mini.image_data} alt={mini.name || 'Miniature'} />
                     {isSelected && <div className="mini-selection-checkmark">✓</div>}
                     <button className="btn-edit-round" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onEdit(mini); }} aria-label={`Edit ${mini.name || 'miniature'}`} type="button">✏️</button>
-                    <button className="btn-view-round" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPreviewImage(`${mini.image_path}?t=${cacheTimestamp}`); }} aria-label={`View ${mini.name || 'miniature'}`} type="button">👁️</button>
+                    <button className="btn-view-round" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPreviewImage(mini.image_data); }} aria-label={`View ${mini.name || 'miniature'}`} type="button">👁️</button>
                   </div>
                 </div>
                 <div className="col-name">{mini.name || 'Unnamed'}</div>

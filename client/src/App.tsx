@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api, Miniature } from './api';
+import { initDatabase } from './database';
 import { parseKeywords } from './utils/keywords';
 import UploadSection from './components/UploadSection';
 import SearchSection, { SortOption, ImageSize } from './components/SearchSection';
@@ -20,10 +21,24 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [hasUnsavedWork, setHasUnsavedWork] = useState(false);
   const [cacheTimestamp, setCacheTimestamp] = useState(Date.now());
+  const [dbInitialized, setDbInitialized] = useState(false);
+
+  // Initialize database on app load
+  useEffect(() => {
+    initDatabase().then(() => {
+      setDbInitialized(true);
+      loadMiniatures();
+    }).catch(error => {
+      console.error('Failed to initialize database:', error);
+      alert('Failed to initialize database. Please refresh the page.');
+    });
+  }, []);
 
   useEffect(() => {
-    loadMiniatures();
-  }, [searchTerm]);
+    if (dbInitialized) {
+      loadMiniatures();
+    }
+  }, [searchTerm, dbInitialized]);
 
   const loadMiniatures = async () => {
     try {
@@ -89,12 +104,11 @@ function App() {
       amount: m.amount || 1,
       painted: !!m.painted,
       keywords: m.keywords || '',
-      image_path: m.image_path || '',
+      image_data: m.image?.data || m.image_data || '',
+      thumbnail_data: m.thumbnail_data || null,
     }));
 
     try {
-      // If image_path references are server-side accessible, create them directly.
-      // Otherwise the user should upload images separately via the upload flow.
       await api.createMiniatures(toCreate);
       setCacheTimestamp(Date.now());
       loadMiniatures();

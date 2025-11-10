@@ -17,7 +17,8 @@ interface MiniatureForm {
   amount: number;
   painted: boolean;
   keywords: string;
-  image_path: string;
+  image_data: string;
+  thumbnail_data: string | null;
   rotation: number;
 }
 
@@ -74,7 +75,8 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onUploadComplete, onUnsav
         amount: 1,
         painted: false,
         keywords: '',
-        image_path: file.path,
+        image_data: file.data,
+        thumbnail_data: file.thumbnailData,
         rotation: 0,
       }));
       
@@ -131,14 +133,15 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onUploadComplete, onUnsav
               setUploadProgress({ loaded, total });
             });
 
-            // Build miniatures payload mapping uploaded paths to entries
+            // Build miniatures payload mapping uploaded data to entries
             const miniaturesToCreate = data.miniatures.map((m: any, idx: number) => ({
               game: m.game || '',
               name: m.name || '',
               amount: m.amount || 1,
               painted: !!m.painted,
               keywords: m.keywords || '',
-              image_path: uploaded[idx] ? uploaded[idx].path : (m.image_path || ''),
+              image_data: uploaded[idx] ? uploaded[idx].data : (m.image_data || ''),
+              thumbnail_data: uploaded[idx] ? uploaded[idx].thumbnailData : (m.thumbnail_data || null),
             }));
 
             try {
@@ -201,7 +204,8 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onUploadComplete, onUnsav
         amount: 1,
         painted: false,
         keywords: '',
-        image_path: file.path,
+        image_data: file.data,
+        thumbnail_data: file.thumbnailData,
         rotation: 0,
       }));
       
