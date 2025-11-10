@@ -1,5 +1,10 @@
 name: Deploy client to GitHub Pages
 
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
 on:
   push:
     branches:
@@ -10,8 +15,11 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout repository (for push)
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -33,3 +41,11 @@ jobs:
           publish_dir: ./client/dist
           publish_branch: gh-pages
           # keep_history: true  # uncomment if you want full commit history on gh-pages
+
+      # Notes:
+      # If you still see "Permission denied to github-actions[bot]" (HTTP 403),
+      # it's typically because the repository or organization disallows the
+      # GITHUB_TOKEN from creating or pushing to the 'gh-pages' branch.
+      # In that case create a Personal Access Token (with repo scope) and add
+      # it to this repository as a secret (e.g. GH_PAGES_PAT), then replace
+      # github_token: ${{ secrets.GITHUB_TOKEN }} with github_token: ${{ secrets.GH_PAGES_PAT }}
