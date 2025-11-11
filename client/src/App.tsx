@@ -8,16 +8,35 @@ import Gallery from './components/Gallery';
 import MetadataEditor from './components/MetadataEditor';
 import './App.css';
 
+// Load setting from localStorage with fallback
+const loadSetting = <T,>(key: string, defaultValue: T): T => {
+  try {
+    const saved = localStorage.getItem(key);
+    return saved !== null ? JSON.parse(saved) : defaultValue;
+  } catch {
+    return defaultValue;
+  }
+};
+
+// Save setting to localStorage
+const saveSetting = <T,>(key: string, value: T): void => {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.warn('Failed to save setting to localStorage:', error);
+  }
+};
+
 function App() {
   const [miniatures, setMiniatures] = useState<Miniature[]>([]);
   const [selectedMiniature, setSelectedMiniature] = useState<Miniature | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [lastSelectedIndex, setLastSelectedIndex] = useState<number>(-1);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState<SortOption>('updated-desc');
-  const [imageSize, setImageSize] = useState<ImageSize>('medium');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [widthMode, setWidthMode] = useState<WidthMode>('constrained');
+  const [sortBy, setSortBy] = useState<SortOption>(() => loadSetting('sortBy', 'updated-desc'));
+  const [imageSize, setImageSize] = useState<ImageSize>(() => loadSetting('imageSize', 'medium'));
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => loadSetting('viewMode', 'grid'));
+  const [widthMode, setWidthMode] = useState<WidthMode>(() => loadSetting('widthMode', 'constrained'));
   const [activeTab, setActiveTab] = useState<'browse' | 'upload'>('browse');
   const [loading, setLoading] = useState(false);
   const [hasUnsavedWork, setHasUnsavedWork] = useState(false);
@@ -34,6 +53,23 @@ function App() {
       alert('Failed to initialize database. Please refresh the page.');
     });
   }, []);
+
+  // Save settings to localStorage when they change
+  useEffect(() => {
+    saveSetting('sortBy', sortBy);
+  }, [sortBy]);
+
+  useEffect(() => {
+    saveSetting('imageSize', imageSize);
+  }, [imageSize]);
+
+  useEffect(() => {
+    saveSetting('viewMode', viewMode);
+  }, [viewMode]);
+
+  useEffect(() => {
+    saveSetting('widthMode', widthMode);
+  }, [widthMode]);
 
   useEffect(() => {
     if (dbInitialized) {
