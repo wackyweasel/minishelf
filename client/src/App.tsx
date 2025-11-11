@@ -42,6 +42,7 @@ function App() {
   const [hasUnsavedWork, setHasUnsavedWork] = useState(false);
   const [cacheTimestamp, setCacheTimestamp] = useState(Date.now());
   const [dbInitialized, setDbInitialized] = useState(false);
+  
 
   // Initialize database on app load
   useEffect(() => {
@@ -142,7 +143,6 @@ function App() {
       painted: !!m.painted,
       keywords: m.keywords || '',
       image_data: m.image?.data || m.image_data || '',
-      thumbnail_data: m.thumbnail_data || null,
     }));
 
     try {
@@ -316,6 +316,7 @@ function App() {
           >
             Browse Collection
           </button>
+          
           <button
             className={`nav-tab ${activeTab === 'upload' ? 'active' : ''}`}
             onClick={() => handleTabChange('upload')}
@@ -379,6 +380,8 @@ function App() {
           cacheTimestamp={cacheTimestamp}
         />
       )}
+
+      
     </div>
   );
 }

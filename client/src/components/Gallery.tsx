@@ -84,7 +84,6 @@ const Gallery: React.FC<GalleryProps> = ({
               painted: m.painted,
               keywords: m.keywords,
               image_data: m.image_data,
-              thumbnail_data: m.thumbnail_data,
             }));
 
             const blob = new Blob([JSON.stringify({ miniatures: exportData }, null, 2)], { type: 'application/json' });
@@ -114,10 +113,17 @@ const Gallery: React.FC<GalleryProps> = ({
                   <div className="selection-checkmark">✓</div>
                 )}
                 <div className="card-image-container">
+                  {/* Use srcSet so browsers can pick a higher-resolution image when available.
+                      Prefer the full image as a higher-density source but fall back to thumbnail.
+                      Add decoding and loading attributes to improve rendering behavior. */}
                   <img
-                    src={mini.thumbnail_data || mini.image_data}
+                    src={mini.image_data}
                     alt={mini.name || 'Miniature'}
                     className="card-image"
+                    decoding="async"
+                    loading="lazy"
+                    data-cache={cacheTimestamp}
+                    style={{ imageRendering: 'auto' }}
                   />
                   {mini.painted && (
                     <span className="painted-badge">🎨 Painted</span>
@@ -207,7 +213,15 @@ const Gallery: React.FC<GalleryProps> = ({
               >
                 <div className="col-img">
                   <div className="mini-img-wrap">
-                    <img src={mini.thumbnail_data || mini.image_data} alt={mini.name || 'Miniature'} />
+                    {/* List view: prefer higher-res image if available and add decoding/loading */}
+                    <img
+                      src={mini.image_data}
+                      alt={mini.name || 'Miniature'}
+                      decoding="async"
+                      loading="lazy"
+                      data-cache={cacheTimestamp}
+                      style={{ imageRendering: 'auto' }}
+                    />
                     {isSelected && <div className="mini-selection-checkmark">✓</div>}
                     <button className="btn-edit-round" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onEdit(mini); }} aria-label={`Edit ${mini.name || 'miniature'}`} type="button">✏️</button>
                     <button className="btn-view-round" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPreviewImage(mini.image_data); }} aria-label={`View ${mini.name || 'miniature'}`} type="button">👁️</button>

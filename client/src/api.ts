@@ -8,7 +8,7 @@ export interface Miniature {
   painted: boolean;
   keywords: string;
   image_data: string;
-  thumbnail_data: string | null;
+  // thumbnail_data removed
   created_at: string;
   updated_at: string;
 }
@@ -17,7 +17,6 @@ export interface UploadedFile {
   id: string;
   filename: string;
   data: string; // base64 encoded image data
-  thumbnailData: string | null; // base64 encoded thumbnail
   originalName: string;
 }
 
@@ -68,31 +67,10 @@ async function resizeImage(base64Image: string, maxWidth: number = 512, maxHeigh
   });
 }
 
-// Helper function to create thumbnail from image
-async function createThumbnail(base64Image: string, maxWidth: number = 200): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const ratio = maxWidth / img.width;
-      canvas.width = maxWidth;
-      canvas.height = img.height * ratio;
-      
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        reject(new Error('Could not get canvas context'));
-        return;
-      }
-      
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      resolve(canvas.toDataURL('image/jpeg', 0.7));
-    };
-    img.onerror = reject;
-    img.src = base64Image;
-  });
-}
+// (thumbnail generation removed)
+
+// Helper to create a medium-sized image for gallery cards (better balance quality/size)
+// (medium-sized image generation removed)
 
 export const api = {
   // Upload images (convert to base64)
@@ -116,20 +94,11 @@ export const api = {
       console.log('Image resized, new length:', base64Data.length, 'reduction:', 
         Math.round((1 - base64Data.length / base64Original.length) * 100) + '%');
       
-      // Create thumbnail
-      let thumbnailData: string | null = null;
-      try {
-        thumbnailData = await createThumbnail(base64Data);
-        console.log('Thumbnail created, length:', thumbnailData?.length);
-      } catch (error) {
-        console.warn('Could not create thumbnail:', error);
-      }
-      
+      // No derived thumbnail created to save space; keep original resized image only
       uploadedFiles.push({
         id,
         filename: `${id}-${file.name}`,
         data: base64Data,
-        thumbnailData,
         originalName: file.name,
       });
       
@@ -142,6 +111,8 @@ export const api = {
     console.log('Upload complete, returning', uploadedFiles.length, 'files');
     return uploadedFiles;
   },
+
+  // (medium generation removed)
 
   // Create miniatures
   createMiniatures: async (miniatures: Partial<Miniature>[]): Promise<void> => {

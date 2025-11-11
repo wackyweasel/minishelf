@@ -14,32 +14,55 @@ export interface Miniature {
   painted: boolean;
   keywords: string;
   image_data: string; // base64 encoded image
-  thumbnail_data: string | null; // base64 encoded thumbnail
+  // thumbnail_data removed
   created_at: string;
   updated_at: string;
 }
 
 // Initialize the database
 export async function initDatabase(): Promise<void> {
+  // Load SQL.js first
   try {
-    // Initialize SQL.js with CDN WASM file
     SQL = await initSqlJs({
       locateFile: (file: string) => `https://sql.js.org/dist/${file}`
     });
+  } catch (err) {
+    console.error('❌ Failed to initialize sql.js (WASM).', err);
+    throw new Error('Failed to initialize sql.js. Check network/WASM availability.');
+  }
 
-    // Try to load existing database from IndexedDB
-    const savedDb = await loadDatabaseFromIndexedDB();
-    
-    if (savedDb) {
+  // Try to load existing database from IndexedDB and recover if corrupted
+  let savedDb: Uint8Array | null = null;
+  try {
+    savedDb = await loadDatabaseFromIndexedDB();
+  } catch (err) {
+    console.warn('⚠️ Could not read saved DB from IndexedDB:', err);
+    savedDb = null;
+  }
+
+  if (savedDb) {
+    try {
       db = new SQL.Database(savedDb);
       console.log('✅ Database loaded from IndexedDB');
-    } else {
+    } catch (err) {
+      console.error('⚠️ Saved database appears corrupted/unreadable. Clearing saved DB and creating a fresh one.', err);
+      try {
+        await clearSavedDatabaseFromIndexedDB();
+        console.log('ℹ️ Cleared saved (corrupted) database from IndexedDB');
+      } catch (e) {
+        console.warn('Could not clear saved database from IndexedDB:', e);
+      }
       db = new SQL.Database();
       console.log('✅ New database created');
     }
+  } else {
+    db = new SQL.Database();
+    console.log('✅ New database created');
+  }
 
-    // Create tables if they don't exist
-    db.run(`
+  // Ensure tables exist. If creating indices/tables fails, attempt to recreate an empty DB once.
+  const ensureSchema = () => {
+    db!.run(`
       CREATE TABLE IF NOT EXISTS miniatures (
         id TEXT PRIMARY KEY,
         game TEXT NOT NULL,
@@ -48,26 +71,39 @@ export async function initDatabase(): Promise<void> {
         painted INTEGER NOT NULL DEFAULT 0,
         keywords TEXT NOT NULL DEFAULT '',
         image_data TEXT NOT NULL,
-        thumbnail_data TEXT,
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
-    db.run(`
+    db!.run(`
       CREATE INDEX IF NOT EXISTS idx_game ON miniatures(game)
     `);
 
-    db.run(`
+    db!.run(`
       CREATE INDEX IF NOT EXISTS idx_painted ON miniatures(painted)
     `);
+  };
 
-    // Save to IndexedDB
+  try {
+    ensureSchema();
+  } catch (err) {
+    console.error('⚠️ Failed to ensure DB schema. Attempting to recreate a fresh DB.', err);
+    try {
+      db = new SQL.Database();
+      ensureSchema();
+      console.log('✅ Fresh database created and schema initialized');
+    } catch (err2) {
+      console.error('❌ Could not create a fresh database or initialize schema:', err2);
+      throw err2;
+    }
+  }
+
+  // Save to IndexedDB but don't fail the whole init if saving fails
+  try {
     await saveDatabaseToIndexedDB();
-    
-  } catch (error) {
-    console.error('❌ Database initialization error:', error);
-    throw error;
+  } catch (err) {
+    console.warn('⚠️ Failed to save DB to IndexedDB. Continuing without persistence:', err);
   }
 }
 
@@ -142,6 +178,44 @@ async function loadDatabaseFromIndexedDB(): Promise<Uint8Array | null> {
   });
 }
 
+// Clear saved database from IndexedDB (used when the saved blob appears corrupted)
+async function clearSavedDatabaseFromIndexedDB(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+    request.onerror = () => reject(request.error);
+
+    request.onsuccess = () => {
+      const idb = request.result;
+      if (!idb.objectStoreNames.contains('database')) {
+        idb.close();
+        resolve();
+        return;
+      }
+
+      const transaction = idb.transaction(['database'], 'readwrite');
+      const store = transaction.objectStore('database');
+      const delReq = store.delete('sqliteDb');
+
+      delReq.onsuccess = () => {
+        idb.close();
+        resolve();
+      };
+      delReq.onerror = () => {
+        idb.close();
+        reject(delReq.error);
+      };
+    };
+
+    request.onupgradeneeded = (event) => {
+      const idb = (event.target as IDBOpenDBRequest).result;
+      if (!idb.objectStoreNames.contains('database')) {
+        idb.createObjectStore('database');
+      }
+    };
+  });
+}
+
 // Save database (call after any modification)
 export async function saveDatabase(): Promise<void> {
   await saveDatabaseToIndexedDB();
@@ -185,12 +259,12 @@ export async function createMiniature(miniature: Partial<Miniature>): Promise<st
     id,
     hasImageData: !!miniature.image_data,
     imageDataLength: miniature.image_data?.length || 0,
-    hasThumbnail: !!miniature.thumbnail_data
+    // thumbnail removed
   });
   
   db!.run(
-    `INSERT INTO miniatures (id, game, name, amount, painted, keywords, image_data, thumbnail_data, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  `INSERT INTO miniatures (id, game, name, amount, painted, keywords, image_data, created_at, updated_at)
+   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       miniature.game || '',
@@ -198,8 +272,7 @@ export async function createMiniature(miniature: Partial<Miniature>): Promise<st
       miniature.amount || 1,
       miniature.painted ? 1 : 0,
       miniature.keywords || '',
-      miniature.image_data || '',
-      miniature.thumbnail_data || null,
+          miniature.image_data || '',
       now,
       now
     ]
@@ -261,7 +334,7 @@ export async function getAllMiniatures(filters?: {
       painted: row.painted === 1,
       keywords: row.keywords as string,
       image_data: row.image_data as string,
-      thumbnail_data: row.thumbnail_data as string | null,
+      // thumbnail_data removed
       created_at: row.created_at as string,
       updated_at: row.updated_at as string,
     };
@@ -293,7 +366,7 @@ export async function getMiniature(id: string): Promise<Miniature | null> {
       painted: row.painted === 1,
       keywords: row.keywords as string,
       image_data: row.image_data as string,
-      thumbnail_data: row.thumbnail_data as string | null,
+  // thumbnail_data removed
       created_at: row.created_at as string,
       updated_at: row.updated_at as string,
     };
@@ -331,10 +404,8 @@ export async function updateMiniature(id: string, updates: Partial<Miniature>): 
     fields.push('image_data = ?');
     values.push(updates.image_data);
   }
-  if (updates.thumbnail_data !== undefined) {
-    fields.push('thumbnail_data = ?');
-    values.push(updates.thumbnail_data);
-  }
+  // thumbnail_data removed
+  // mediumData removed
 
   fields.push('updated_at = ?');
   values.push(new Date().toISOString());

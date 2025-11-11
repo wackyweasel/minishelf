@@ -68,11 +68,10 @@ const MetadataEditor: React.FC<MetadataEditorProps> = ({ miniature, onClose, onS
       });
       if (uploaded && uploaded.length > 0) {
         const newImageData = uploaded[0].data;
-        const newThumbnailData = uploaded[0].thumbnailData;
         // Immediately show the uploaded image in the editor
         setLocalImagePath(newImageData);
         // Persist change via onSave so parent updates
-        onSave(miniature.id, { image_data: newImageData, thumbnail_data: newThumbnailData });
+        onSave(miniature.id, { image_data: newImageData });
       }
     } catch (err) {
       console.error('Image replace/upload failed', err);
@@ -94,7 +93,13 @@ const MetadataEditor: React.FC<MetadataEditorProps> = ({ miniature, onClose, onS
 
         <div className="modal-body">
           <div className="modal-image">
-            <img src={localImagePath || miniature.image_data} alt={miniature.name} />
+            {/* Append cacheTimestamp to ensure we pick up recent image changes when present */}
+            <img
+              src={(localImagePath || miniature.image_data) + ("" + (localImagePath ? "" : ("?t=" + cacheTimestamp)))}
+              alt={miniature.name}
+              decoding="async"
+              loading="lazy"
+            />
             <div className="image-controls">
               <input
                 ref={fileInputRef}

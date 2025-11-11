@@ -18,7 +18,6 @@ interface MiniatureForm {
   painted: boolean;
   keywords: string;
   image_data: string;
-  thumbnail_data: string | null;
   rotation: number;
 }
 
@@ -76,7 +75,6 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onUploadComplete, onUnsav
         painted: false,
         keywords: '',
         image_data: file.data,
-        thumbnail_data: file.thumbnailData,
         rotation: 0,
       }));
       
@@ -141,7 +139,6 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onUploadComplete, onUnsav
               painted: !!m.painted,
               keywords: m.keywords || '',
               image_data: uploaded[idx] ? uploaded[idx].data : (m.image_data || ''),
-              thumbnail_data: uploaded[idx] ? uploaded[idx].thumbnailData : (m.thumbnail_data || null),
             }));
 
             try {
@@ -169,7 +166,6 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onUploadComplete, onUnsav
               painted: !!m.painted,
               keywords: m.keywords || '',
               image_data: m.image_data || m.image?.data || '',
-              thumbnail_data: m.thumbnail_data || null,
               rotation: 0,
             }));
             setMiniatures(imports);
@@ -206,7 +202,6 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onUploadComplete, onUnsav
         painted: false,
         keywords: '',
         image_data: file.data,
-        thumbnail_data: file.thumbnailData,
         rotation: 0,
       }));
       
@@ -422,7 +417,7 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onUploadComplete, onUnsav
               <div key={mini.id} className="miniature-form-card">
                 <div className="form-card-image">
                   <img 
-                    src={mini.thumbnail_data || mini.image_data} 
+                    src={mini.image_data} 
                     alt={`Upload ${index + 1}`}
                     style={{ transform: `rotate(${mini.rotation}deg)` }}
                   />
