@@ -92,12 +92,25 @@ function App() {
 
   const sortMiniatures = (data: Miniature[], sort: SortOption): Miniature[] => {
     const sorted = [...data];
-    
+
+    const nameKey = (s?: string) => (s || '').trim();
+    // comparator that sends empty names to the end in both directions
+    const compareNames = (aName: string, bName: string, desc = false) => {
+      const a = nameKey(aName);
+      const b = nameKey(bName);
+      const aEmpty = a === '';
+      const bEmpty = b === '';
+      if (aEmpty && bEmpty) return 0;
+      if (aEmpty) return 1; // a should come after b
+      if (bEmpty) return -1; // b should come after a
+      return desc ? b.localeCompare(a) : a.localeCompare(b);
+    };
+
     switch (sort) {
       case 'name-asc':
-        return sorted.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        return sorted.sort((a, b) => compareNames(a.name, b.name, false));
       case 'name-desc':
-        return sorted.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
+        return sorted.sort((a, b) => compareNames(a.name, b.name, true));
       case 'game-asc':
         return sorted.sort((a, b) => (a.game || '').localeCompare(b.game || ''));
       case 'game-desc':
