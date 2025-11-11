@@ -106,6 +106,47 @@
   color: white;
 }
 
+.width-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.width-controls label {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.width-buttons {
+  display: flex;
+  gap: 0.25rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 0.25rem;
+}
+
+.width-btn {
+  padding: 0.5rem 0.9rem;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: #9fb0c7;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.width-btn:hover {
+  background: rgba(63, 74, 82, 0.12);
+  color: #e8eef6;
+}
+
+.width-btn.active {
+  background: #7fb3d5;
+  color: white;
+}
+
 .size-controls label {
   color: #94a3b8;
   font-size: 0.9rem;

@@ -4,6 +4,7 @@ import './SearchSection.css';
 export type SortOption = 'name-asc' | 'name-desc' | 'game-asc' | 'game-desc' | 'updated-desc' | 'updated-asc' | 'created-desc' | 'created-asc';
 export type ImageSize = 'small' | 'medium' | 'large';
 export type ViewMode = 'grid' | 'list';
+export type WidthMode = 'constrained' | 'full';
 
 interface SearchSectionProps {
   searchTerm: string;
@@ -15,6 +16,8 @@ interface SearchSectionProps {
   onImageSizeChange: (size: ImageSize) => void;
   view: ViewMode;
   onViewChange: (view: ViewMode) => void;
+  widthMode: WidthMode;
+  onWidthModeChange: (mode: WidthMode) => void;
 }
 
 const SearchSection: React.FC<SearchSectionProps> = ({
@@ -27,6 +30,8 @@ const SearchSection: React.FC<SearchSectionProps> = ({
   onImageSizeChange,
   view,
   onViewChange,
+  widthMode,
+  onWidthModeChange,
 }) => {
   return (
     <div className="search-section">
@@ -97,6 +102,25 @@ const SearchSection: React.FC<SearchSectionProps> = ({
                 title="List view"
               >
                 List
+              </button>
+            </div>
+          </div>
+          <div className="width-controls">
+            <label>Width:</label>
+            <div className="width-buttons">
+              <button
+                className={`width-btn ${widthMode === 'constrained' ? 'active' : ''}`}
+                onClick={() => onWidthModeChange('constrained')}
+                title="Constrained width"
+              >
+                ▢
+              </button>
+              <button
+                className={`width-btn ${widthMode === 'full' ? 'active' : ''}`}
+                onClick={() => onWidthModeChange('full')}
+                title="Full width"
+              >
+                ▭
               </button>
             </div>
           </div>

@@ -3,7 +3,7 @@ import { api, Miniature } from './api';
 import { initDatabase } from './database';
 import { parseKeywords } from './utils/keywords';
 import UploadSection from './components/UploadSection';
-import SearchSection, { SortOption, ImageSize } from './components/SearchSection';
+import SearchSection, { SortOption, ImageSize, WidthMode } from './components/SearchSection';
 import Gallery from './components/Gallery';
 import MetadataEditor from './components/MetadataEditor';
 import './App.css';
@@ -17,6 +17,7 @@ function App() {
   const [sortBy, setSortBy] = useState<SortOption>('updated-desc');
   const [imageSize, setImageSize] = useState<ImageSize>('medium');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [widthMode, setWidthMode] = useState<WidthMode>('constrained');
   const [activeTab, setActiveTab] = useState<'browse' | 'upload'>('browse');
   const [loading, setLoading] = useState(false);
   const [hasUnsavedWork, setHasUnsavedWork] = useState(false);
@@ -288,7 +289,7 @@ function App() {
         </nav>
       </header>
 
-      <main className="main-content">
+      <main className={`main-content ${widthMode === 'full' ? 'main-content-full' : ''}`}>
         {activeTab === 'browse' && (
           <>
             <SearchSection
@@ -301,6 +302,8 @@ function App() {
               onImageSizeChange={setImageSize}
               view={viewMode}
               onViewChange={setViewMode}
+              widthMode={widthMode}
+              onWidthModeChange={setWidthMode}
             />
             <Gallery
               miniatures={miniatures}

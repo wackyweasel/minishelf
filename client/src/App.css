@@ -69,6 +69,10 @@
   padding: 2rem;
 }
 
+.main-content-full {
+  max-width: none;
+}
+
 @media (max-width: 768px) {
   .header {
     padding: 1.5rem 1rem;
