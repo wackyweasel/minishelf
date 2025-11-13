@@ -3,6 +3,7 @@ import { Miniature, api } from '../api';
 import AutocompleteInput from './AutocompleteInput';
 import { normalizeKeywords } from '../utils/keywords';
 import './MetadataEditor.css';
+import { notify } from '../utils/notify';
 
 interface MetadataEditorProps {
   miniature: Miniature;
@@ -75,7 +76,7 @@ const MetadataEditor: React.FC<MetadataEditorProps> = ({ miniature, onClose, onS
       }
     } catch (err) {
       console.error('Image replace/upload failed', err);
-      alert('Failed to upload new image');
+      notify.error('Failed to upload new image');
     } finally {
       setUploadingImage(false);
       // clear input so same file can be selected again if needed

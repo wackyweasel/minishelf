@@ -63,7 +63,7 @@ After starting, test these URLs:
 2. **Frontend:** http://localhost:5173
    - Should show the MiniShelf interface
 
-3. **Upload test:** Click "Upload & Add" and try uploading images
+3. **Upload test:** Click "Upload" and try uploading images
    - Should work now!
 
 ## Still Having Issues?

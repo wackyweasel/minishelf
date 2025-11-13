@@ -6,6 +6,36 @@ const DB_VERSION = 1;
 let db: Database | null = null;
 let SQL: any = null;
 
+// Ensure SQL.js is initialized with robust locateFile fallbacks
+async function ensureSqlInitialized(): Promise<void> {
+  if (SQL) return;
+
+  const locateStrategies = [
+    // Preferred CDN
+    (file: string) => `https://sql.js.org/dist/${file}`,
+    // Try package-provided path
+    (file: string) => file,
+  // Local fallback (assumes sql-wasm.wasm served at app root)
+  (_file: string) => `/sql-wasm.wasm`,
+  ];
+
+  let lastErr: any = null;
+
+  for (const locateFile of locateStrategies) {
+    try {
+      SQL = await initSqlJs({ locateFile });
+      return;
+    } catch (err) {
+      console.warn('sql.js init attempt failed for locateFile strategy, trying next...', err);
+      lastErr = err;
+      SQL = null;
+    }
+  }
+
+  console.error('❌ All attempts to initialize sql.js failed:', lastErr);
+  throw new Error('Failed to initialize sql.js. Ensure the wasm file is reachable (network or local /sql-wasm.wasm).');
+}
+
 export interface Miniature {
   id: string;
   game: string;
@@ -219,6 +249,16 @@ async function clearSavedDatabaseFromIndexedDB(): Promise<void> {
 // Save database (call after any modification)
 export async function saveDatabase(): Promise<void> {
   await saveDatabaseToIndexedDB();
+  // Mark local cache as having local modifications (dirty)
+  try {
+    localStorage.setItem('isDirty', 'true');
+    try {
+      // notify other parts of the app in this tab
+      window.dispatchEvent(new CustomEvent('isDirtyChanged', { detail: { isDirty: true } }));
+    } catch {}
+  } catch {
+    // ignore localStorage errors
+  }
 }
 
 // Get database instance
@@ -452,4 +492,81 @@ export async function getKeywords(): Promise<string[]> {
   stmt.free();
 
   return Array.from(keywordSet).sort();
+}
+
+// --- Helpers for safe temporary DB creation and swapping ---
+
+// Ensure schema exists on a given Database instance
+function ensureSchemaOn(dbInstance: Database) {
+  dbInstance.run(`
+    CREATE TABLE IF NOT EXISTS miniatures (
+      id TEXT PRIMARY KEY,
+      game TEXT NOT NULL,
+      name TEXT NOT NULL,
+      amount INTEGER NOT NULL DEFAULT 1,
+      painted INTEGER NOT NULL DEFAULT 0,
+      keywords TEXT NOT NULL DEFAULT '',
+      image_data TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  dbInstance.run(`CREATE INDEX IF NOT EXISTS idx_game ON miniatures(game)`);
+  dbInstance.run(`CREATE INDEX IF NOT EXISTS idx_painted ON miniatures(painted)`);
+}
+
+// Create a new temporary in-memory Database instance with schema initialized
+export async function createTemporaryDatabase(): Promise<Database> {
+  await ensureSqlInitialized();
+  const tmp = new SQL.Database();
+  ensureSchemaOn(tmp);
+  return tmp;
+}
+
+// Insert an array of miniatures into a provided Database instance (does not touch global DB or persistence)
+export async function insertMiniaturesIntoDatabase(dbInstance: Database, miniatures: Miniature[]): Promise<void> {
+  const insertStmt = dbInstance.prepare(
+    `INSERT INTO miniatures (id, game, name, amount, painted, keywords, image_data, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  );
+
+  try {
+    for (const m of miniatures) {
+      const id = m.id || crypto.randomUUID();
+      const now = new Date().toISOString();
+      insertStmt.run([
+        id,
+        m.game || '',
+        m.name || '',
+        m.amount ?? 1,
+        m.painted ? 1 : 0,
+        m.keywords || '',
+        m.image_data || '',
+        m.created_at || now,
+        m.updated_at || now
+      ]);
+    }
+  } finally {
+    insertStmt.free();
+  }
+}
+
+// Replace the current active database with the provided Database instance and persist it to IndexedDB
+export async function replaceDatabaseWith(dbInstance: Database): Promise<void> {
+  // Replace in-memory reference
+  db = new SQL.Database(dbInstance.export());
+  // Ensure schema on new global DB (should already exist, but be safe)
+  ensureSchemaOn(db);
+  // Persist
+  await saveDatabaseToIndexedDB();
+  // Successful replacement via synchronization means local changes were overwritten — mark clean
+  try {
+    localStorage.setItem('isDirty', 'false');
+    try {
+      window.dispatchEvent(new CustomEvent('isDirtyChanged', { detail: { isDirty: false } }));
+    } catch {}
+  } catch {
+    // ignore
+  }
 }

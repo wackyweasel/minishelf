@@ -23,13 +23,13 @@ Then open your browser to **http://localhost:5173**
 ### What You Can Do
 
 1. **Upload Miniatures**
-   - Go to "Upload & Add" tab
+   - Go to "Upload" tab
    - Select multiple images (drag & drop or click)
    - Use batch edit to apply common metadata to all
    - Fill in individual names
    - Save all at once
 
-2. **Browse Collection**
+2. **Browse**
    - View all your miniatures in a gallery
    - See painted status, game names, and keywords
    - Click to edit or delete

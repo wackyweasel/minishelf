@@ -3,10 +3,13 @@ import { api, Miniature } from './api';
 import { initDatabase } from './database';
 import { parseKeywords } from './utils/keywords';
 import UploadSection from './components/UploadSection';
+import Synchronize from './components/Synchronize';
 import SearchSection, { SortOption, ImageSize, WidthMode } from './components/SearchSection';
 import Gallery from './components/Gallery';
 import MetadataEditor from './components/MetadataEditor';
 import './App.css';
+import { notify } from './utils/notify';
+import { confirmAction } from './utils/confirm';
 
 // Load setting from localStorage with fallback
 const loadSetting = <T,>(key: string, defaultValue: T): T => {
@@ -37,7 +40,7 @@ function App() {
   const [imageSize, setImageSize] = useState<ImageSize>(() => loadSetting('imageSize', 'medium'));
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => loadSetting('viewMode', 'grid'));
   const [widthMode, setWidthMode] = useState<WidthMode>(() => loadSetting('widthMode', 'constrained'));
-  const [activeTab, setActiveTab] = useState<'browse' | 'upload'>('browse');
+  const [activeTab, setActiveTab] = useState<'browse' | 'upload' | 'sync'>('browse');
   const [loading, setLoading] = useState(false);
   const [hasUnsavedWork, setHasUnsavedWork] = useState(false);
   const [cacheTimestamp, setCacheTimestamp] = useState(Date.now());
@@ -51,7 +54,7 @@ function App() {
       loadMiniatures();
     }).catch(error => {
       console.error('Failed to initialize database:', error);
-      alert('Failed to initialize database. Please refresh the page.');
+      notify.error('Failed to initialize database. Please refresh the page.');
     });
   }, []);
 
@@ -144,7 +147,7 @@ function App() {
   const handleImportFile = async (data: any) => {
     // Expecting { miniatures: [ ... ] }
     if (!data || !Array.isArray(data.miniatures)) {
-      alert('Invalid import file');
+      notify.error('Invalid import file');
       return;
     }
 
@@ -163,16 +166,16 @@ function App() {
       setCacheTimestamp(Date.now());
       loadMiniatures();
       setActiveTab('browse');
-      alert(`Imported ${toCreate.length} miniatures`);
+      notify.success(`Imported ${toCreate.length} miniatures`);
     } catch (err) {
       console.error('Import failed:', err);
-      alert('Failed to import miniatures');
+      notify.error('Failed to import miniatures');
     }
   };
 
-  const handleTabChange = (tab: 'browse' | 'upload') => {
+  const handleTabChange = async (tab: 'browse' | 'upload' | 'sync') => {
     if (hasUnsavedWork) {
-      const confirmed = confirm(
+      const confirmed = await confirmAction(
         'You have unsaved work. Are you sure you want to leave? All unsaved changes will be lost.'
       );
       if (!confirmed) {
@@ -181,6 +184,13 @@ function App() {
       setHasUnsavedWork(false);
     }
     setActiveTab(tab);
+  };
+
+  const handleSynchronized = (_count: number) => {
+    // After synchronization, reload miniatures from local DB
+    setCacheTimestamp(Date.now());
+    loadMiniatures();
+    setActiveTab('browse');
   };
 
   const handleUpdate = async (id: string, data: Partial<Miniature>) => {
@@ -242,7 +252,7 @@ function App() {
       setLastSelectedIndex(-1);
     } catch (error) {
       console.error('Failed to batch update miniatures:', error);
-      alert('Failed to update some miniatures. Please try again.');
+      notify.error('Failed to update some miniatures. Please try again.');
       throw error;
     }
   };
@@ -257,7 +267,7 @@ function App() {
       setLastSelectedIndex(-1);
     } catch (error) {
       console.error('Failed to delete selected miniatures:', error);
-      alert('Failed to delete some selected miniatures.');
+      notify.error('Failed to delete some selected miniatures.');
       throw error;
     }
   };
@@ -327,14 +337,21 @@ function App() {
             className={`nav-tab ${activeTab === 'browse' ? 'active' : ''}`}
             onClick={() => handleTabChange('browse')}
           >
-            Browse Collection
+            Browse
           </button>
           
           <button
             className={`nav-tab ${activeTab === 'upload' ? 'active' : ''}`}
             onClick={() => handleTabChange('upload')}
           >
-            Upload & Add
+            Upload
+          </button>
+
+          <button
+            className={`nav-tab ${activeTab === 'sync' ? 'active' : ''}`}
+            onClick={() => handleTabChange('sync')}
+          >
+            Synchronize
           </button>
         </nav>
       </header>
@@ -382,6 +399,10 @@ function App() {
             onUnsavedWorkChange={setHasUnsavedWork}
             onImportFile={handleImportFile}
           />
+        )}
+
+        {activeTab === 'sync' && (
+          <Synchronize onSynchronized={handleSynchronized} />
         )}
       </main>
 

@@ -1,0 +1,20 @@
+.ms-confirm {
+  position: fixed;
+  left: 50%;
+  top: 1.5rem;
+  transform: translateX(-50%);
+  background: #0b1220;
+  color: #e6eef6;
+  border: 1px solid rgba(255,255,255,0.06);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  z-index: 10000;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.ms-confirm-msg { font-weight: 600; }
+.ms-confirm-actions { display:flex; gap:0.5rem; }
+.ms-confirm-ok { background: linear-gradient(135deg,#e94560,#ff6b88); color:white; border:none; padding:0.5rem 0.75rem; border-radius:6px; }
+.ms-confirm-cancel { background: linear-gradient(135deg,#9aa3ad,#7b868f); color:white; border:none; padding:0.5rem 0.75rem; border-radius:6px; }

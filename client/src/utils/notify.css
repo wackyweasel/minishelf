@@ -1,0 +1,14 @@
+.ms-toast {
+  margin: 0.5rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  font-weight: 600;
+  box-shadow: 0 6px 18px rgba(2,6,23,0.5);
+  color: white;
+}
+
+.ms-info { background: linear-gradient(135deg,#5b9bd5,#4ca3d6); }
+.ms-success { background: linear-gradient(135deg,#4caf50,#66bb6a); }
+.ms-error { background: linear-gradient(135deg,#e53935,#ff6b6b); }
+
+#minishelf-notify-root { position: fixed; right: 1rem; top: 1rem; z-index: 9999; }

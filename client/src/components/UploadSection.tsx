@@ -3,6 +3,7 @@ import { api, UploadedFile } from '../api';
 import AutocompleteInput from './AutocompleteInput';
 import { normalizeKeywords } from '../utils/keywords';
 import './UploadSection.css';
+import { notify } from '../utils/notify';
 
 interface UploadSectionProps {
   onUploadComplete: () => void;
@@ -82,7 +83,7 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onUploadComplete, onUnsav
       onUnsavedWorkChange(true); // Mark as having unsaved work
     } catch (error) {
       console.error('Upload failed:', error);
-      alert('Failed to upload images');
+      notify.error('Failed to upload images');
     } finally {
       setUploading(false);
       setUploadProgress({ loaded: 0, total: 0 });
@@ -146,7 +147,7 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onUploadComplete, onUnsav
               onUploadComplete();
             } catch (err) {
               console.error('Failed to create miniatures from import:', err);
-              alert('Failed to import miniatures');
+                notify.error('Failed to import miniatures');
             } finally {
               setUploading(false);
               setUploadProgress({ loaded: 0, total: 0 });
@@ -172,12 +173,12 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onUploadComplete, onUnsav
             setUploadedFiles([]);
             onUnsavedWorkChange(true);
           } else {
-            alert('Invalid import file');
+          notify.error('Invalid import file');
           }
         }
       } catch (err) {
         console.error('Import failed:', err);
-        alert('Failed to import file');
+        notify.error('Failed to import file');
       }
       setIsDragging(false);
       return;
@@ -209,7 +210,7 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onUploadComplete, onUnsav
       onUnsavedWorkChange(true); // Mark as having unsaved work
     } catch (error) {
       console.error('Upload failed:', error);
-      alert('Failed to upload images');
+      notify.error('Failed to upload images');
     } finally {
       setUploading(false);
       setUploadProgress({ loaded: 0, total: 0 });
@@ -271,7 +272,7 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onUploadComplete, onUnsav
 
   const handleSave = async () => {
     if (miniatures.length === 0) {
-      alert('No miniatures to save');
+      notify.error('No miniatures to save');
       return;
     }
 
@@ -303,7 +304,7 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onUploadComplete, onUnsav
   onUploadComplete();
     } catch (error) {
       console.error('Save failed:', error);
-      alert('Failed to save miniatures');
+        notify.error('Failed to save miniatures');
     } finally {
       setSaving(false);
     }

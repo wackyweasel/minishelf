@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { api, Miniature } from '../api';
 import AutocompleteInput from './AutocompleteInput';
 import './BatchEditSection.css';
+import { notify } from '../utils/notify';
+import { confirmAction } from '../utils/confirm';
 
 interface BatchEditSectionProps {
   selectedCount: number;
@@ -53,7 +55,7 @@ const BatchEditSection: React.FC<BatchEditSectionProps> = ({
     if (batchPainted !== null) updates.painted = batchPainted;
 
     if (Object.keys(updates).length === 0) {
-      alert('Please enter at least one field to update');
+      notify.error('Please enter at least one field to update');
       return;
     }
 
@@ -73,7 +75,7 @@ const BatchEditSection: React.FC<BatchEditSectionProps> = ({
   setBatchPainted(null);
     } catch (error) {
       console.error('Batch update failed:', error);
-      alert('Failed to update miniatures');
+      notify.error('Failed to update miniatures');
     }
   };
 
@@ -164,13 +166,13 @@ const BatchEditSection: React.FC<BatchEditSectionProps> = ({
               )}
             <button
               onClick={async () => {
-                const ok = confirm(`Delete ${selectedCount} selected miniature${selectedCount !== 1 ? 's' : ''}? This cannot be undone.`);
+                const ok = await confirmAction(`Delete ${selectedCount} selected miniature${selectedCount !== 1 ? 's' : ''}? This cannot be undone.`);
                 if (!ok) return;
                 try {
                   await onDeleteSelected();
                 } catch (err) {
                   console.error('Failed to delete selected miniatures:', err);
-                  alert('Failed to delete selected miniatures');
+                  notify.error('Failed to delete selected miniatures');
                 }
               }}
               className="delete-selected-btn"

@@ -101,15 +101,15 @@ minishelf/
 
 ### 1. Upload Miniatures
 
-1. Click **"Upload & Add"** tab
+1. Click **"Upload"** tab
 2. Click or drag images to upload (supports PNG, JPG, GIF, WebP)
 3. Use **Batch Edit** to apply common metadata (game name, keywords) to all images
 4. Fill in individual names for each miniature
 5. Click **"Save X Miniatures"**
 
-### 2. Browse Collection
+### 2. Browse
 
-1. Go to **"Browse Collection"** tab
+1. Go to **"Browse"** tab
 2. View all your miniatures in a grid layout
 3. Click on any miniature to view details or edit
 
