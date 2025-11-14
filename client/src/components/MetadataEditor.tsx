@@ -94,13 +94,20 @@ const MetadataEditor: React.FC<MetadataEditorProps> = ({ miniature, onClose, onS
 
         <div className="modal-body">
           <div className="modal-image">
-            {/* Append cacheTimestamp to ensure we pick up recent image changes when present */}
-            <img
-              src={(localImagePath || miniature.image_data) + ("" + (localImagePath ? "" : ("?t=" + cacheTimestamp)))}
-              alt={miniature.name}
-              decoding="async"
-              loading="lazy"
-            />
+            {/* Build image src safely: don't append cache query to data or blob URLs. */}
+            {(() => {
+              const base = localImagePath || miniature.image_data || '';
+              const isDataOrBlob = base.startsWith('data:') || base.startsWith('blob:');
+              const src = isDataOrBlob || localImagePath ? base : base + ("?t=" + cacheTimestamp);
+              return (
+                <img
+                  src={src}
+                  alt={miniature.name}
+                  decoding="async"
+                  loading="lazy"
+                />
+              );
+            })()}
             <div className="image-controls">
               <input
                 ref={fileInputRef}

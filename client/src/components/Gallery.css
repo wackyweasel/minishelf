@@ -441,12 +441,38 @@
   }
 }
 
+/* Ensure a minimum number of columns for each size variant when the
+   viewport becomes narrow. This forces at least 3 columns for the
+   small setting, at least 2 for medium, and allows 1 for large. The
+   thumbnails will shrink to fit these constraints. */
+@media (max-width: 520px) {
+  .gallery-small {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  .gallery-medium {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+  }
+
+  /* large can remain a single column on very narrow screens */
+  .gallery-large {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+}
+
 /* List view styles */
 .mini-list {
   width: 100%;
   border-radius: 8px;
   overflow: hidden;
   background: rgba(255,255,255,0.02);
+}
+.mini-list {
+  /* allow horizontal scrolling when row grid is wider than viewport */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .mini-list-header, .mini-list-row {
   display: grid;
@@ -490,17 +516,20 @@
   padding: 0.3rem 0.45rem;
   grid-template-columns: 72px 1fr 120px 56px 64px 1fr;
   gap: 0.5rem;
+  min-width: 640px;
 }
 .mini-list-medium .mini-list-header,
 .mini-list-medium .mini-list-row {
   padding: 0.6rem 0.8rem;
   grid-template-columns: 140px 1fr 160px 80px 100px 1fr;
+  min-width: 920px;
 }
 .mini-list-large .mini-list-header,
 .mini-list-large .mini-list-row {
   padding: 1.1rem 1.25rem;
   grid-template-columns: 240px 1fr 320px 120px 140px 1fr;
   gap: 1.25rem;
+  min-width: 1240px;
 }
 
 .mini-list-row:hover { background: rgba(127, 179, 213, 0.02); }
