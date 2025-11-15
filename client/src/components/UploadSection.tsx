@@ -329,7 +329,7 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onUploadComplete, onUnsav
               <span className="upload-icon">📸</span>
               <h3>Click to upload images or import JSON</h3>
               <p>or drag and drop images or exported JSON files</p>
-              <p className="upload-hint">For images: PNG, JPG, GIF up to 20MB each</p>
+              <p className="upload-hint">For images: PNG, JPG, GIF</p>
             </div>
             <input
               id="file-upload"
