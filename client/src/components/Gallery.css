@@ -10,6 +10,12 @@
   gap: 0.75rem;
 }
 
+.gallery-tiny {
+  /* Force at least 4 items per row: compute minmax so items shrink but at least 4 columns */
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 0.5rem;
+}
+
 .gallery-medium {
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 1rem;
@@ -215,6 +221,13 @@
   right: 0.3rem;
 }
 
+.gallery-tiny .painted-badge {
+  padding: 0.15rem 0.4rem;
+  font-size: 0.6rem;
+  top: 0.25rem;
+  right: 0.25rem;
+}
+
 .gallery-medium .painted-badge {
   padding: 0.2rem 0.6rem;
   font-size: 0.7rem;
@@ -230,6 +243,10 @@
   padding: 0.5rem;
 }
 
+.gallery-tiny .card-content {
+  padding: 0.35rem;
+}
+
 .card-title {
   font-size: 1.1rem;
   font-weight: 600;
@@ -243,6 +260,11 @@
 .gallery-small .card-title {
   font-size: 0.85rem;
   margin-bottom: 0.3rem;
+}
+
+.gallery-tiny .card-title {
+  font-size: 0.75rem;
+  margin-bottom: 0.25rem;
 }
 
 .gallery-medium .card-title {
@@ -266,6 +288,11 @@
   margin-bottom: 0.3rem;
 }
 
+.gallery-tiny .card-game {
+  font-size: 0.65rem;
+  margin-bottom: 0.25rem;
+}
+
 .gallery-medium .card-game {
   font-size: 0.8rem;
   margin-bottom: 0.4rem;
@@ -287,6 +314,11 @@
   margin-bottom: 0.3rem;
 }
 
+.gallery-tiny .card-amount {
+  font-size: 0.65rem;
+  margin-bottom: 0.25rem;
+}
+
 .gallery-medium .card-amount {
   font-size: 0.75rem;
   margin-bottom: 0.4rem;
@@ -302,6 +334,11 @@
 .gallery-small .card-keywords {
   gap: 0.25rem;
   margin-bottom: 0.5rem;
+}
+
+.gallery-tiny .card-keywords {
+  gap: 0.2rem;
+  margin-bottom: 0.4rem;
 }
 
 .gallery-medium .card-keywords {
@@ -326,6 +363,12 @@
   border-radius: 8px;
 }
 
+.gallery-tiny .keyword-tag {
+  padding: 0.12rem 0.36rem;
+  font-size: 0.6rem;
+  border-radius: 6px;
+}
+
 .gallery-medium .keyword-tag {
   padding: 0.2rem 0.5rem;
   font-size: 0.7rem;
@@ -346,6 +389,11 @@
 .gallery-small .card-actions {
   gap: 0.3rem;
   margin-top: 0.5rem;
+}
+
+.gallery-tiny .card-actions {
+  gap: 0.25rem;
+  margin-top: 0.35rem;
 }
 
 .gallery-medium .card-actions {
@@ -370,6 +418,13 @@
   padding: 0.4rem;
   font-size: 0.7rem;
   border-radius: 4px;
+}
+
+.gallery-tiny .btn-edit,
+.gallery-tiny .btn-delete {
+  padding: 0.32rem;
+  font-size: 0.64rem;
+  border-radius: 3px;
 }
 
 .gallery-medium .btn-edit,
@@ -517,6 +572,13 @@
   grid-template-columns: 72px 1fr 120px 56px 64px 1fr;
   gap: 0.5rem;
   min-width: 640px;
+}
+.mini-list-tiny .mini-list-header,
+.mini-list-tiny .mini-list-row {
+  padding: 0.25rem 0.4rem;
+  grid-template-columns: 56px 1fr 100px 48px 56px 1fr;
+  gap: 0.4rem;
+  min-width: 520px;
 }
 .mini-list-medium .mini-list-header,
 .mini-list-medium .mini-list-row {

@@ -7,6 +7,7 @@ import Synchronize from './components/Synchronize';
 import SearchSection, { SortOption, ImageSize, WidthMode } from './components/SearchSection';
 import Gallery from './components/Gallery';
 import MetadataEditor from './components/MetadataEditor';
+import ViewOptionsSidebar from './components/ViewOptionsSidebar';
 import './App.css';
 import { notify } from './utils/notify';
 import { confirmAction } from './utils/confirm';
@@ -40,11 +41,15 @@ function App() {
   const [imageSize, setImageSize] = useState<ImageSize>(() => loadSetting('imageSize', 'medium'));
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => loadSetting('viewMode', 'grid'));
   const [widthMode, setWidthMode] = useState<WidthMode>(() => loadSetting('widthMode', 'constrained'));
+  const [showKeywords, setShowKeywords] = useState<boolean>(() => loadSetting('showKeywords', true));
+  const [showGame, setShowGame] = useState<boolean>(() => loadSetting('showGame', true));
+  const [showName, setShowName] = useState<boolean>(() => loadSetting('showName', true));
   const [activeTab, setActiveTab] = useState<'browse' | 'upload' | 'sync'>('browse');
   const [loading, setLoading] = useState(false);
   const [hasUnsavedWork, setHasUnsavedWork] = useState(false);
   const [cacheTimestamp, setCacheTimestamp] = useState(Date.now());
   const [dbInitialized, setDbInitialized] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   
 
   // Initialize database on app load
@@ -74,6 +79,18 @@ function App() {
   useEffect(() => {
     saveSetting('widthMode', widthMode);
   }, [widthMode]);
+
+  useEffect(() => {
+    saveSetting('showKeywords', showKeywords);
+  }, [showKeywords]);
+
+  useEffect(() => {
+    saveSetting('showGame', showGame);
+  }, [showGame]);
+
+  useEffect(() => {
+    saveSetting('showName', showName);
+  }, [showName]);
 
   useEffect(() => {
     if (dbInitialized) {
@@ -365,14 +382,7 @@ function App() {
               searchTerm={searchTerm}
               onSearchChange={setSearchTerm}
               resultCount={miniatures.length}
-              sortBy={sortBy}
-              onSortChange={handleSortChange}
-              imageSize={imageSize}
-              onImageSizeChange={setImageSize}
-              view={viewMode}
-              onViewChange={setViewMode}
-              widthMode={widthMode}
-              onWidthModeChange={setWidthMode}
+              onToggleSidebar={() => setSidebarOpen(true)}
             />
             <Gallery
               miniatures={miniatures}
@@ -384,6 +394,9 @@ function App() {
               imageSize={imageSize}
               viewMode={viewMode}
               cacheTimestamp={cacheTimestamp}
+              showKeywords={showKeywords}
+              showGame={showGame}
+              showName={showName}
               selectedIds={selectedIds}
               onCardClick={handleCardClick}
               onBatchUpdate={handleBatchUpdate}
@@ -424,7 +437,24 @@ function App() {
         />
       )}
 
-      
+      <ViewOptionsSidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        sortBy={sortBy}
+        onSortChange={handleSortChange}
+        imageSize={imageSize}
+        onImageSizeChange={setImageSize}
+        view={viewMode}
+        onViewChange={setViewMode}
+        widthMode={widthMode}
+        onWidthModeChange={setWidthMode}
+        showKeywords={showKeywords}
+        onShowKeywordsChange={setShowKeywords}
+        showGame={showGame}
+        onShowGameChange={setShowGame}
+        showName={showName}
+        onShowNameChange={setShowName}
+      />
     </div>
   );
 }

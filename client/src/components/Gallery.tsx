@@ -19,6 +19,9 @@ interface GalleryProps {
   onClearSelection: () => void;
   onDeleteSelected: () => Promise<void>;
   onSelectVisible?: () => void;
+  showKeywords?: boolean;
+  showGame?: boolean;
+  showName?: boolean;
 }
 
 const Gallery: React.FC<GalleryProps> = ({
@@ -36,8 +39,13 @@ const Gallery: React.FC<GalleryProps> = ({
   onClearSelection,
   onDeleteSelected,
   onSelectVisible,
+  showKeywords,
+  showGame,
+  showName,
 }) => {
   const [previewImage, setPreviewImage] = React.useState<string | null>(null);
+  const containerRef = React.useRef<HTMLDivElement | null>(null);
+  const [computedColumns, setComputedColumns] = React.useState<number | null>(null);
 
   // close on escape
   React.useEffect(() => {
@@ -47,6 +55,54 @@ const Gallery: React.FC<GalleryProps> = ({
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
+
+  // Enforce minimum columns per image size when the container is narrow.
+  React.useEffect(() => {
+    if (!containerRef.current) return;
+
+    const minColsForSize: Record<string, number | null> = {
+      tiny: 4,
+      small: 3,
+      medium: 2,
+      large: null,
+    };
+
+    // Approximate desired thumbnail width per size (should match CSS minmax values)
+    const thumbMinWidthForSize: Record<string, number> = {
+      tiny: 110, // matches Gallery.css .gallery-tiny
+      small: 150,
+      medium: 200,
+      large: 280,
+    };
+
+    function recompute() {
+      const el = containerRef.current;
+      if (!el) return;
+      const w = el.clientWidth || el.getBoundingClientRect().width;
+
+      const minCols = minColsForSize[imageSize] ?? null;
+      if (!minCols) {
+        // no minimum for large
+        setComputedColumns(null);
+        return;
+      }
+
+      const thumbMin = thumbMinWidthForSize[imageSize] || 150;
+
+      // columns that fit at thumbMin width
+      const colsFit = Math.max(1, Math.floor(w / thumbMin));
+
+      // Desired columns is at least the minimum, but don't exceed items available.
+      const desired = Math.max(minCols, colsFit);
+      const cols = Math.min(desired, Math.max(1, miniatures.length));
+      setComputedColumns(cols);
+    }
+
+    recompute();
+    const ro = new ResizeObserver(recompute);
+    ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, [imageSize, miniatures.length, viewMode]);
   if (loading) {
     return (
       <div className="gallery-loading">
@@ -66,7 +122,9 @@ const Gallery: React.FC<GalleryProps> = ({
     );
   }
 
-  return (
+    const showAny = !!(showName || showGame || showKeywords);
+
+    return (
     <>
       {selectedIds.size > 0 && (
         <BatchEditSection
@@ -103,22 +161,25 @@ const Gallery: React.FC<GalleryProps> = ({
       )}
 
       {viewMode === 'grid' ? (
-        <div className={`gallery gallery-${imageSize}`}>
+        <div
+          ref={containerRef}
+          className={`gallery gallery-${imageSize}`}
+          style={
+            computedColumns && imageSize !== 'large'
+              ? { gridTemplateColumns: `repeat(${computedColumns}, minmax(0, 1fr))` }
+              : undefined
+          }
+        >
           {miniatures.map((mini, index) => {
             const isSelected = selectedIds.has(mini.id);
             return (
-              <div 
-                key={mini.id} 
+              <div
+                key={mini.id}
                 className={`gallery-card ${isSelected ? 'selected' : ''}`}
-                onClick={(e) => onCardClick(mini, index, e.shiftKey)}
+                onClick={(e) => onCardClick(mini, index, (e as any).shiftKey)}
               >
-                {isSelected && (
-                  <div className="selection-checkmark">✓</div>
-                )}
+                {isSelected && <div className="selection-checkmark">✓</div>}
                 <div className="card-image-container">
-                  {/* Use srcSet so browsers can pick a higher-resolution image when available.
-                      Prefer the full image as a higher-density source but fall back to thumbnail.
-                      Add decoding and loading attributes to improve rendering behavior. */}
                   <img
                     src={mini.image_data}
                     alt={mini.name || 'Miniature'}
@@ -128,9 +189,7 @@ const Gallery: React.FC<GalleryProps> = ({
                     data-cache={cacheTimestamp}
                     style={{ imageRendering: 'auto' }}
                   />
-                  {mini.painted && (
-                    <span className="painted-badge">🎨 Painted</span>
-                  )}
+                  {mini.painted && <span className="painted-badge">🎨</span>}
                   <button
                     className="btn-edit-round"
                     onClick={(e) => {
@@ -156,86 +215,30 @@ const Gallery: React.FC<GalleryProps> = ({
                     👁️
                   </button>
                 </div>
-                <div className="card-content">
+                {showAny && (
+                  <div className="card-content">
                   <h3 className="card-title">
-                    {mini.name || 'Unnamed'}
-                    {mini.amount > 1 && ` (x${mini.amount})`}
+                    {showName ? (
+                      <>
+                        {mini.name || 'Unnamed'}
+                        {mini.amount > 1 && ` (x${mini.amount})`}
+                      </>
+                    ) : ''}
                   </h3>
                   {mini.game && (
-                    <p 
-                      className="card-game"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onGameClick(mini.game);
-                      }}
-                    >
-                      🎲 {mini.game}
-                    </p>
+                    showGame && (
+                      <p
+                        className="card-game"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onGameClick(mini.game);
+                        }}
+                      >
+                        🎲 {mini.game}
+                      </p>
+                    )
                   )}
-                  {mini.keywords && (
-                    <div className="card-keywords">
-                      {mini.keywords.split(',').map((keyword, idx) => (
-                        <span 
-                          key={idx} 
-                          className="keyword-tag"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onKeywordClick(keyword.trim());
-                          }}
-                        >
-                          {keyword.trim()}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  <div className="card-actions">
-                    {/* actions remain here if we want extras later */}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div className={`mini-list mini-list-${imageSize}`}>
-          <div className="mini-list-header">
-            <div className="col-img">Image</div>
-            <div className="col-name">Name</div>
-            <div className="col-game">Game</div>
-            <div className="col-amount">Qty</div>
-            <div className="col-painted">Painted</div>
-            <div className="col-keywords">Keywords</div>
-          </div>
-          {miniatures.map((mini, index) => {
-            const isSelected = selectedIds.has(mini.id);
-            return (
-              <div
-                key={mini.id}
-                className={`mini-list-row ${isSelected ? 'selected' : ''}`}
-                onClick={(e) => onCardClick(mini, index, (e as any).shiftKey)}
-              >
-                <div className="col-img">
-                  <div className="mini-img-wrap">
-                    {/* List view: prefer higher-res image if available and add decoding/loading */}
-                    <img
-                      src={mini.image_data}
-                      alt={mini.name || 'Miniature'}
-                      decoding="async"
-                      loading="lazy"
-                      data-cache={cacheTimestamp}
-                      style={{ imageRendering: 'auto' }}
-                    />
-                    {isSelected && <div className="mini-selection-checkmark">✓</div>}
-                    <button className="btn-edit-round" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onEdit(mini); }} aria-label={`Edit ${mini.name || 'miniature'}`} type="button">✏️</button>
-                    <button className="btn-view-round" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPreviewImage(mini.image_data); }} aria-label={`View ${mini.name || 'miniature'}`} type="button">👁️</button>
-                  </div>
-                </div>
-                <div className="col-name">{mini.name || 'Unnamed'}</div>
-                <div className="col-game" onClick={(e) => { e.stopPropagation(); onGameClick(mini.game); }}>{mini.game}</div>
-                <div className="col-amount">{mini.amount}</div>
-                <div className="col-painted">{mini.painted ? 'Yes' : 'No'}</div>
-                <div className="col-keywords">
-                  {mini.keywords && (
+                  {showKeywords && mini.keywords && (
                     <div className="card-keywords">
                       {mini.keywords.split(',').map((keyword, idx) => (
                         <span
@@ -251,10 +254,112 @@ const Gallery: React.FC<GalleryProps> = ({
                       ))}
                     </div>
                   )}
-                </div>
+                    <div className="card-actions">
+                      {/* actions remain here if we want extras later */}
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}
+        </div>
+      ) : (
+        <div className={`mini-list mini-list-${imageSize}`}>
+          {showAny ? (
+            <>
+              <div className="mini-list-header">
+                <div className="col-img">Image</div>
+                <div className="col-name">Name</div>
+                {showGame && <div className="col-game">Game</div>}
+                <div className="col-amount">Qty</div>
+                <div className="col-painted">Painted</div>
+                <div className="col-keywords">Keywords</div>
+              </div>
+              {miniatures.map((mini, index) => {
+                const isSelected = selectedIds.has(mini.id);
+                return (
+                  <div
+                    key={mini.id}
+                    className={`mini-list-row ${isSelected ? 'selected' : ''}`}
+                    onClick={(e) => onCardClick(mini, index, (e as any).shiftKey)}
+                  >
+                    <div className="col-img">
+                      <div className="mini-img-wrap">
+                        <img
+                          src={mini.image_data}
+                          alt={mini.name || 'Miniature'}
+                          decoding="async"
+                          loading="lazy"
+                          data-cache={cacheTimestamp}
+                          style={{ imageRendering: 'auto' }}
+                        />
+                        {isSelected && <div className="mini-selection-checkmark">✓</div>}
+                        <button className="btn-edit-round" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onEdit(mini); }} aria-label={`Edit ${mini.name || 'miniature'}`} type="button">✏️</button>
+                        <button className="btn-view-round" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPreviewImage(mini.image_data); }} aria-label={`View ${mini.name || 'miniature'}`} type="button">👁️</button>
+                      </div>
+                    </div>
+                    <div className="col-name">{showName ? (mini.name || 'Unnamed') : ''}</div>
+                    {showGame && (
+                      <div className="col-game" onClick={(e) => { e.stopPropagation(); onGameClick(mini.game); }}>{mini.game}</div>
+                    )}
+                    <div className="col-amount">{showName ? mini.amount : ''}</div>
+                    <div className="col-painted">{mini.painted ? 'Yes' : 'No'}</div>
+                    <div className="col-keywords">
+                      {showKeywords && mini.keywords && (
+                        <div className="card-keywords">
+                          {mini.keywords.split(',').map((keyword, idx) => (
+                            <span
+                              key={idx}
+                              className="keyword-tag"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onKeywordClick(keyword.trim());
+                              }}
+                            >
+                              {keyword.trim()}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </>
+          ) : (
+            // simplified rows showing image only
+            <>
+              <div className="mini-list-header">
+                <div className="col-img">Image</div>
+              </div>
+              {miniatures.map((mini, index) => {
+                const isSelected = selectedIds.has(mini.id);
+                return (
+                  <div
+                    key={mini.id}
+                    className={`mini-list-row ${isSelected ? 'selected' : ''}`}
+                    onClick={(e) => onCardClick(mini, index, (e as any).shiftKey)}
+                  >
+                    <div className="col-img">
+                      <div className="mini-img-wrap">
+                        <img
+                          src={mini.image_data}
+                          alt={mini.name || 'Miniature'}
+                          decoding="async"
+                          loading="lazy"
+                          data-cache={cacheTimestamp}
+                          style={{ imageRendering: 'auto' }}
+                        />
+                        {isSelected && <div className="mini-selection-checkmark">✓</div>}
+                        <button className="btn-edit-round" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onEdit(mini); }} aria-label={`Edit ${mini.name || 'miniature'}`} type="button">✏️</button>
+                        <button className="btn-view-round" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPreviewImage(mini.image_data); }} aria-label={`View ${mini.name || 'miniature'}`} type="button">👁️</button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </>
+          )}
         </div>
       )}
       {/* Image preview modal */}
