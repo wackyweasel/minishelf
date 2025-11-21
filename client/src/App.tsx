@@ -261,7 +261,9 @@ function App() {
     if (selectedIds.size === 0) return;
     const ids = Array.from(selectedIds);
     try {
-      await Promise.all(ids.map(id => api.deleteMiniature(id)));
+      // Use bulk delete to avoid saving DB multiple times and improve performance
+      await api.deleteMiniatures(ids);
+      // Reload once after delete
       await loadMiniatures();
       setSelectedIds(new Set());
       setLastSelectedIndex(-1);
@@ -388,6 +390,13 @@ function App() {
               onClearSelection={() => {
                 setSelectedIds(new Set());
                 setLastSelectedIndex(-1);
+              }}
+              onSelectVisible={() => {
+                const newSelected = new Set<string>();
+                for (const m of miniatures) {
+                  newSelected.add(m.id);
+                }
+                setSelectedIds(newSelected);
               }}
             />
           </>

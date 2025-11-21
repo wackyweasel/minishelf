@@ -26,7 +26,6 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
   const [isFocused, setIsFocused] = useState(false);
-  const [suggestionsPosition, setSuggestionsPosition] = useState({ top: 0, left: 0, width: 0 });
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
@@ -83,32 +82,7 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
     setActiveSuggestionIndex(-1);
   }, [value, suggestions, isFocused, isKeywordField]);
 
-  // Update suggestions position
-  useEffect(() => {
-    if (showSuggestions && inputRef.current) {
-      const updatePosition = () => {
-        if (inputRef.current) {
-          const rect = inputRef.current.getBoundingClientRect();
-          setSuggestionsPosition({
-            top: rect.bottom,
-            left: rect.left,
-            width: rect.width,
-          });
-        }
-      };
-      
-      updatePosition();
-      
-      // Update position on scroll and resize
-      window.addEventListener('scroll', updatePosition, true);
-      window.addEventListener('resize', updatePosition);
-      
-      return () => {
-        window.removeEventListener('scroll', updatePosition, true);
-        window.removeEventListener('resize', updatePosition);
-      };
-    }
-  }, [showSuggestions]);
+  // suggestions are positioned via CSS (relative to wrapper)
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -231,11 +205,6 @@ const AutocompleteInput: React.FC<AutocompleteInputProps> = ({
         <div 
           ref={suggestionsRef} 
           className="autocomplete-suggestions"
-          style={{
-            top: `${suggestionsPosition.top}px`,
-            left: `${suggestionsPosition.left}px`,
-            width: `${suggestionsPosition.width}px`,
-          }}
         >
           {filteredSuggestions.map((suggestion, index) => (
             <div

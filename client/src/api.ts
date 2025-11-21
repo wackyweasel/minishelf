@@ -144,6 +144,10 @@ export const api = {
   deleteMiniature: async (id: string): Promise<void> => {
     await db.deleteMiniature(id);
   },
+  // Bulk delete miniatures
+  deleteMiniatures: async (ids: string[]): Promise<void> => {
+    await db.deleteMiniatures(ids);
+  },
 
   // Get list of games
   getGames: async (): Promise<string[]> => {

@@ -11,6 +11,7 @@ interface BatchEditSectionProps {
   onClearSelection: () => void;
   onDeleteSelected: () => Promise<void>;
   onExportSelected?: () => void;
+  onSelectVisible?: () => void;
 }
 
 const BatchEditSection: React.FC<BatchEditSectionProps> = ({ 
@@ -19,12 +20,13 @@ const BatchEditSection: React.FC<BatchEditSectionProps> = ({
   onClearSelection,
   onDeleteSelected,
   onExportSelected,
+  onSelectVisible,
 }) => {
   const [batchGame, setBatchGame] = useState('');
-  const [batchAmount, setBatchAmount] = useState<number | ''>('');
   const [addKeywords, setAddKeywords] = useState('');
   const [removeKeywords, setRemoveKeywords] = useState('');
   const [batchPainted, setBatchPainted] = useState<boolean|null>(null);
+  const [editing, setEditing] = useState(false);
   const [gameSuggestions, setGameSuggestions] = useState<string[]>([]);
   const [keywordSuggestions, setKeywordSuggestions] = useState<string[]>([]);
 
@@ -49,7 +51,6 @@ const BatchEditSection: React.FC<BatchEditSectionProps> = ({
     const updates: Partial<Miniature> & { addKeywords?: string; removeKeywords?: string } = {};
     
     if (batchGame) updates.game = batchGame;
-    if (batchAmount) updates.amount = batchAmount as number;
   if (addKeywords) updates.addKeywords = addKeywords;
   if (removeKeywords) updates.removeKeywords = removeKeywords;
     if (batchPainted !== null) updates.painted = batchPainted;
@@ -69,7 +70,6 @@ const BatchEditSection: React.FC<BatchEditSectionProps> = ({
       
       // Clear form
       setBatchGame('');
-      setBatchAmount('');
       setAddKeywords('');
       setRemoveKeywords('');
   setBatchPainted(null);
@@ -82,116 +82,145 @@ const BatchEditSection: React.FC<BatchEditSectionProps> = ({
   return (
     <div className="batch-edit-section">
       <div className="batch-edit-header">
-        <h3>{selectedCount} miniature{selectedCount !== 1 ? 's' : ''} selected</h3>
+        <h3>
+          {selectedCount > 0 
+            ? <><span className="count">{selectedCount}</span> miniature{selectedCount !== 1 ? 's' : ''} selected</>
+            : 'No miniatures selected'
+          }
+        </h3>
       </div>
+
       <div className="batch-edit-form">
-        <div className="batch-edit-inputs">
-          <AutocompleteInput
-            type="text"
-            placeholder="Game name"
-            value={batchGame}
-            onChange={setBatchGame}
-            suggestions={gameSuggestions}
-            className="batch-edit-input"
-          />
-          <input
-            type="number"
-            placeholder="Quantity"
-            value={batchAmount}
-            onChange={(e) => setBatchAmount(e.target.value ? parseInt(e.target.value) : '')}
-            className="batch-edit-input"
-            min="1"
-          />
-          <AutocompleteInput
-            type="text"
-            placeholder="Add keywords"
-            value={addKeywords}
-            onChange={setAddKeywords}
-            suggestions={keywordSuggestions}
-            className="batch-edit-input"
-            isKeywordField={true}
-          />
-          <AutocompleteInput
-            type="text"
-            placeholder="Remove keywords"
-            value={removeKeywords}
-            onChange={setRemoveKeywords}
-            suggestions={keywordSuggestions}
-            className="batch-edit-input"
-            isKeywordField={true}
-          />
-          <div className="batch-edit-painted-toggle">
-            <span className="painted-toggle-label">Painted</span>
-            <div className="painted-toggle-group">
+        {/* Primary Actions Row */}
+        <div className="batch-edit-primary-actions">
+          <button
+            type="button"
+            onClick={onSelectVisible}
+            className="batch-edit-btn"
+          >
+            Select All Visible
+          </button>
+          
+          <button
+            type="button"
+            className="batch-edit-btn primary"
+            onClick={() => setEditing((v) => !v)}
+            aria-pressed={editing}
+          >
+            {editing ? '✕ Close Editor' : '✎ Edit Selection'}
+          </button>
+          
+          <button 
+            onClick={onClearSelection} 
+            className="batch-edit-btn" 
+            type="button" 
+            disabled={selectedCount === 0}
+          >
+            Clear Selection
+          </button>
+          
+          {onExportSelected && (
+            <button
+              onClick={onExportSelected}
+              className="batch-edit-btn"
+              type="button"
+              disabled={selectedCount === 0}
+            >
+              Export Selected
+            </button>
+          )}
+          
+          <button
+            onClick={async () => {
+              const ok = await confirmAction(`Delete ${selectedCount} selected miniature${selectedCount !== 1 ? 's' : ''}? This cannot be undone.`);
+              if (!ok) return;
+              try {
+                await onDeleteSelected();
+              } catch (err) {
+                console.error('Failed to delete selected miniatures:', err);
+                notify.error('Failed to delete selected miniatures');
+              }
+            }}
+            className="batch-edit-btn danger"
+            type="button"
+            disabled={selectedCount === 0}
+          >
+            Delete Selected
+          </button>
+        </div>
+
+        {/* Edit Form (shown when editing is true) */}
+        {editing && (
+          <div className="batch-edit-inputs-container">
+            <div className="batch-edit-inputs">
+              <AutocompleteInput
+                type="text"
+                placeholder="Game name"
+                value={batchGame}
+                onChange={setBatchGame}
+                suggestions={gameSuggestions}
+                className="batch-edit-input"
+              />
+              <AutocompleteInput
+                type="text"
+                placeholder="Add keywords"
+                value={addKeywords}
+                onChange={setAddKeywords}
+                suggestions={keywordSuggestions}
+                className="batch-edit-input"
+                isKeywordField={true}
+              />
+              <AutocompleteInput
+                type="text"
+                placeholder="Remove keywords"
+                value={removeKeywords}
+                onChange={setRemoveKeywords}
+                suggestions={keywordSuggestions}
+                className="batch-edit-input"
+                isKeywordField={true}
+              />
+              <div className="batch-edit-painted-toggle">
+                <div className="painted-toggle-group">
+                  <button
+                    type="button"
+                    className={`painted-toggle-btn${batchPainted === null ? ' active' : ''}`}
+                    onClick={() => setBatchPainted(null)}
+                    title="Don't change painted status"
+                  >
+                    -
+                  </button>
+                  <button
+                    type="button"
+                    className={`painted-toggle-btn${batchPainted === true ? ' active painted' : ''}`}
+                    onClick={() => setBatchPainted(true)}
+                    title="Set as painted"
+                  >
+                    Painted
+                  </button>
+                  <button
+                    type="button"
+                    className={`painted-toggle-btn${batchPainted === false ? ' active unpainted' : ''}`}
+                    onClick={() => setBatchPainted(false)}
+                    title="Set as unpainted"
+                  >
+                    Unpainted
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="batch-edit-apply-section">
               <button
                 type="button"
-                className={`painted-toggle-btn${batchPainted === null ? ' active' : ''}`}
-                onClick={() => setBatchPainted(null)}
-                title="Don't change painted status"
+                onClick={handleApplyBatch}
+                className="batch-edit-apply-btn"
+                disabled={selectedCount === 0 || (!batchGame && batchPainted === null && !addKeywords && !removeKeywords)}
               >
-                —
-              </button>
-              <button
-                type="button"
-                className={`painted-toggle-btn${batchPainted === true ? ' active painted' : ''}`}
-                onClick={() => setBatchPainted(true)}
-                title="Set as painted"
-              >
-                Painted
-              </button>
-              <button
-                type="button"
-                className={`painted-toggle-btn${batchPainted === false ? ' active unpainted' : ''}`}
-                onClick={() => setBatchPainted(false)}
-                title="Set as unpainted"
-              >
-                Unpainted
+                Apply Changes to {selectedCount} Miniature{selectedCount !== 1 ? 's' : ''}
               </button>
             </div>
           </div>
-        </div>
-        <div className="batch-edit-actions">
-          <div className="batch-edit-actions-left">
-            <button onClick={onClearSelection} className="clear-selection-btn" type="button">
-              Clear Selection
-            </button>
-              {onExportSelected && (
-                <button
-                  onClick={onExportSelected}
-                  className="export-selected-btn"
-                  type="button"
-                >
-                  Export Selected
-                </button>
-              )}
-            <button
-              onClick={async () => {
-                const ok = await confirmAction(`Delete ${selectedCount} selected miniature${selectedCount !== 1 ? 's' : ''}? This cannot be undone.`);
-                if (!ok) return;
-                try {
-                  await onDeleteSelected();
-                } catch (err) {
-                  console.error('Failed to delete selected miniatures:', err);
-                  notify.error('Failed to delete selected miniatures');
-                }
-              }}
-              className="delete-selected-btn"
-              type="button"
-            >
-              Delete Selected
-            </button>
-          </div>
-          <div className="batch-edit-actions-right">
-            <button
-              type="button"
-              onClick={handleApplyBatch}
-              className="batch-edit-apply-btn"
-              disabled={!batchGame && !batchPainted && !batchAmount && !addKeywords && !removeKeywords}
-            >
-              Apply to Selected
-            </button>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );

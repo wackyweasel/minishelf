@@ -1,203 +1,265 @@
-.batch-edit-painted-toggle {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.painted-toggle-label {
-  color: white;
-  font-size: 1rem;
-  margin-right: 0.2rem;
-}
-
-.painted-toggle-group {
-  display: flex;
-  gap: 0.2rem;
-}
-
-.painted-toggle-btn {
-  padding: 0.4rem 0.9rem;
-  background: #2b2f33;
-  color: #cfd8e3;
-  border: 1px solid #3b4248;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 0.95rem;
-  transition: background 0.2s, color 0.2s, border-color 0.2s;
-}
-.painted-toggle-btn.active {
-  background: #ff6b88;
-  color: #1b1b1f;
-  border-color: #ff6b88;
-  z-index: 1;
-}
-.painted-toggle-btn.painted.active {
-  background: #6bd9a7;
-  border-color: #6bd9a7;
-}
-.painted-toggle-btn.unpainted.active {
-  background: #8b98a6;
-  border-color: #8b98a6;
-}
-.painted-toggle-btn:not(.active):hover {
-  background: #394042;
-  color: #fff;
-}
 .batch-edit-section {
-  background-color: #26292c;
-  border: 1px solid #383e43;
+  --bg: #26292c;
+  --panel-border: #383e43;
+  --accent: #7fb3d5;
+  --accent-contrast: #07121a;
+  --muted: #8b98a6;
+  --success: #6bd9a7;
+  --danger: #f87171;
+  --input-bg: #23272a;
+  --input-border: #3b4248;
+  --text-color: #eef6ff;
+  --button-bg: #33373a;
+  --button-hover: #3e4448;
+
+  background-color: var(--bg);
+  border: 1px solid var(--panel-border);
   border-radius: 8px;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
 }
 
+/* Selection Info Bar */
 .batch-edit-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--panel-border);
 }
 
 .batch-edit-header h3 {
   margin: 0;
-  color: #ff8aa0;
-}
-
-.clear-selection-btn {
-  padding: 0.6rem 1.2rem;
-  background-color: #33373a;
-  color: #edf2f7;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.2s, transform 0.08s;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.clear-selection-btn:hover {
-  background-color: #3e4448;
-  transform: translateY(-1px);
-}
-
-/* Export button matches the look of other action buttons */
-.export-selected-btn {
-  padding: 0.6rem 1.2rem;
-  background-color: #344046;
-  color: #eef6ff;
-  border: 1px solid #3f4a52;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.2s, transform 0.08s;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: 0.6rem;
-}
-
-.export-selected-btn:hover {
-  background-color: #3f4a52;
-  transform: translateY(-1px);
-}
-
-.delete-selected-btn {
-  padding: 0.6rem 1.2rem;
-  background: rgba(255, 107, 136, 0.12);
-  color: #ff9aa8;
-  border: 1px solid rgba(255, 107, 136, 0.18);
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.2s, border-color 0.2s, transform 0.08s;
-  margin-left: 0.6rem;
+  color: var(--text-color);
   font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
+  font-size: 0.95rem;
 }
 
-.delete-selected-btn:hover {
-  background: rgba(255, 107, 136, 0.22);
-  border-color: #ff9aa8;
-  transform: translateY(-1px);
+.batch-edit-header h3 .count {
+  color: var(--accent);
+  font-weight: 700;
 }
 
+/* Main Form Container */
 .batch-edit-form {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
+/* Primary Action Buttons (Top Row) */
+.batch-edit-primary-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.batch-edit-btn {
+  padding: 0.5rem 1rem;
+  background-color: var(--button-bg);
+  color: var(--text-color);
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.batch-edit-btn:hover:not(:disabled) {
+  background-color: var(--button-hover);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.batch-edit-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.batch-edit-btn.primary {
+  background-color: var(--accent);
+  color: var(--accent-contrast);
+  border-color: var(--accent);
+}
+
+.batch-edit-btn.primary:hover:not(:disabled) {
+  background-color: #6ba3c5;
+}
+
+.batch-edit-btn.danger {
+  background-color: rgba(248, 113, 113, 0.1);
+  color: var(--danger);
+  border-color: rgba(248, 113, 113, 0.3);
+}
+
+.batch-edit-btn.danger:hover:not(:disabled) {
+  background-color: rgba(248, 113, 113, 0.2);
+  border-color: var(--danger);
+}
+
+/* Edit Form Fields */
+.batch-edit-inputs-container {
+  background-color: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  padding: 1rem;
+  margin-top: 0.5rem;
+}
+
 .batch-edit-inputs {
   display: grid;
-  grid-template-columns: 1.5fr 0.8fr 1.2fr 1.2fr 0.8fr;
-  gap: 1rem;
-  align-items: center;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  align-items: start;
 }
 
 .batch-edit-input {
   width: 100%;
-  padding: 0.5rem;
-  background-color: #23272a;
-  border: 1px solid #3b4248;
-  border-radius: 4px;
-  color: #e6eef6;
+  padding: 0.5rem 0.75rem;
+  background-color: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  color: var(--text-color);
+  font-size: 0.95rem;
+  transition: border-color 0.2s ease;
+  height: 38px;
+  box-sizing: border-box;
 }
 
-.batch-edit-checkbox {
+.batch-edit-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* Painted Toggle */
+.batch-edit-painted-toggle {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
+}
+
+.painted-toggle-label {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: nowrap;
+  padding-left: 0.25rem;
+}
+
+.painted-toggle-group {
+  display: flex;
+  gap: 0;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--input-border);
+  width: 100%;
+  height: 38px;
+}
+
+.painted-toggle-btn {
+  flex: 1;
+  padding: 0.5rem 0.5rem;
+  background: var(--input-bg);
+  color: var(--muted);
+  border: none;
+  border-right: 1px solid var(--input-border);
   cursor: pointer;
+  font-weight: 500;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.batch-edit-checkbox input[type="checkbox"] {
-  width: 1.2rem;
-  height: 1.2rem;
-  cursor: pointer;
+.painted-toggle-btn:last-child {
+  border-right: none;
 }
 
-.batch-edit-checkbox span {
-  color: white;
+.painted-toggle-btn.active {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-weight: 700;
 }
 
-.batch-edit-actions {
+.painted-toggle-btn:not(.active):hover {
+  background: var(--button-bg);
+  color: var(--text-color);
+}
+
+/* Apply Button in Edit Mode */
+.batch-edit-apply-section {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.batch-edit-actions-left {
-  display: flex;
-  gap: 0.6rem;
-  align-items: center;
-}
-
-.batch-edit-actions-right {
-  display: flex;
-  gap: 0.6rem;
-  align-items: center;
+  justify-content: flex-end;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--input-border);
+  margin-top: 0.25rem;
 }
 
 .batch-edit-apply-btn {
-  padding: 0.75rem 2rem;
-  background-color: #ff6b88;
-  color: #1b1b1f;
+  padding: 0.65rem 1.5rem;
+  background-color: var(--accent);
+  color: var(--accent-contrast);
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.3s;
+  font-weight: 700;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
 }
 
 .batch-edit-apply-btn:hover:not(:disabled) {
-  background-color: #ff9aa8;
+  background-color: #6ba3c5;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(127, 179, 213, 0.3);
 }
 
 .batch-edit-apply-btn:disabled {
-  background-color: #333;
+  background-color: #2a2d30;
+  color: var(--muted);
   cursor: not-allowed;
   opacity: 0.5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .batch-edit-section {
+    padding: 1rem;
+  }
+
+  .batch-edit-inputs {
+    grid-template-columns: 1fr;
+  }
+
+  .batch-edit-primary-actions {
+    flex-direction: column;
+  }
+
+  .batch-edit-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .painted-toggle-btn {
+    font-size: 0.8rem;
+    padding: 0.5rem 0.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .batch-edit-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .batch-edit-inputs-container {
+    padding: 0.75rem;
+  }
 }

@@ -465,6 +465,29 @@ export async function deleteMiniature(id: string): Promise<void> {
   await saveDatabase();
 }
 
+export async function deleteMiniatures(ids: string[]): Promise<void> {
+  if (!ids || ids.length === 0) return;
+
+  // Perform deletes inside a transaction and save once for better performance
+  try {
+    db!.run('BEGIN TRANSACTION');
+    const stmt = db!.prepare('DELETE FROM miniatures WHERE id = ?');
+    try {
+      for (const id of ids) {
+        stmt.run([id]);
+      }
+    } finally {
+      stmt.free();
+    }
+    db!.run('COMMIT');
+  } catch (err) {
+    try { db!.run('ROLLBACK'); } catch {}
+    throw err;
+  }
+
+  await saveDatabase();
+}
+
 export async function getGames(): Promise<string[]> {
   const stmt = db!.prepare('SELECT DISTINCT game FROM miniatures ORDER BY game');
   const games: string[] = [];

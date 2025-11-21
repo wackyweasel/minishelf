@@ -18,6 +18,7 @@ interface GalleryProps {
   onBatchUpdate: (data: Partial<Miniature>) => Promise<void>;
   onClearSelection: () => void;
   onDeleteSelected: () => Promise<void>;
+  onSelectVisible?: () => void;
 }
 
 const Gallery: React.FC<GalleryProps> = ({
@@ -34,6 +35,7 @@ const Gallery: React.FC<GalleryProps> = ({
   onBatchUpdate,
   onClearSelection,
   onDeleteSelected,
+  onSelectVisible,
 }) => {
   const [previewImage, setPreviewImage] = React.useState<string | null>(null);
 
@@ -72,6 +74,7 @@ const Gallery: React.FC<GalleryProps> = ({
           onBatchUpdate={onBatchUpdate}
           onClearSelection={onClearSelection}
           onDeleteSelected={onDeleteSelected}
+          onSelectVisible={onSelectVisible}
           onExportSelected={async () => {
             // Build export data with image data already in base64
             const selected = miniatures.filter(m => selectedIds.has(m.id));

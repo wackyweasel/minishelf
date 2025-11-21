@@ -72,7 +72,7 @@
 
 .upload-progress {
   margin-top: 1rem;
-  color: #ff8aa0;
+  color: #7fb3d5;
   font-weight: 600;
   text-align: center;
 }
@@ -218,8 +218,8 @@
 }
 
 .miniature-form-card:hover {
-  border-color: #e94560;
-  box-shadow: 0 4px 12px rgba(233, 69, 96, 0.2);
+  border-color: #4aa3c6;
+  box-shadow: 0 4px 12px rgba(74,163,198,0.12);
 }
 
 .form-card-image {
@@ -324,7 +324,7 @@
 
 .form-input:focus {
   outline: none;
-  border-color: #e94560;
+  border-color: #4aa3c6;
   background: rgba(255, 255, 255, 0.08);
 }
 
@@ -377,15 +377,15 @@
 }
 
 .btn-save {
-  background: linear-gradient(135deg, #e94560 0%, #ff6b88 100%);
+  background: linear-gradient(135deg, #7fb3d5 0%, #4aa3c6 100%);
   color: white;
-  border: 2px solid #e94560;
-  box-shadow: 0 4px 12px rgba(233, 69, 96, 0.3);
+  border: 2px solid #4aa3c6;
+  box-shadow: 0 4px 12px rgba(74,163,198,0.18);
 }
 
 .btn-save:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(233, 69, 96, 0.4);
+  box-shadow: 0 6px 16px rgba(74,163,198,0.22);
 }
 
 .btn-save:disabled {

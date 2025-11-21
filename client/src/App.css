@@ -36,6 +36,10 @@
   max-width: 1400px;
   margin: 0 auto;
   justify-content: center;
+  /* Keep tabs on a single row; allow horizontal scroll on very narrow windows */
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .nav-tab {
@@ -83,7 +87,11 @@
   }
 
   .nav-tabs {
-    flex-direction: column;
+    /* Keep horizontal layout on narrow screens; reduce gap and allow scrolling
+       Keep buttons centered instead of flushing left when the content overflows. */
+    gap: 0.5rem;
+    justify-content: center;
+    padding: 0 0.5rem;
   }
 
   .main-content {

@@ -16,5 +16,5 @@
 
 .ms-confirm-msg { font-weight: 600; }
 .ms-confirm-actions { display:flex; gap:0.5rem; }
-.ms-confirm-ok { background: linear-gradient(135deg,#e94560,#ff6b88); color:white; border:none; padding:0.5rem 0.75rem; border-radius:6px; }
+.ms-confirm-ok { background: linear-gradient(135deg,#7fb3d5,#4aa3c6); color:white; border:none; padding:0.5rem 0.75rem; border-radius:6px; }
 .ms-confirm-cancel { background: linear-gradient(135deg,#9aa3ad,#7b868f); color:white; border:none; padding:0.5rem 0.75rem; border-radius:6px; }
