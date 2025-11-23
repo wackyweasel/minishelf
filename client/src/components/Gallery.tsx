@@ -44,6 +44,7 @@ const Gallery: React.FC<GalleryProps> = ({
   showName,
 }) => {
   const [previewImage, setPreviewImage] = React.useState<string | null>(null);
+  const [openMenuForId, setOpenMenuForId] = React.useState<string | null>(null);
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const [computedColumns, setComputedColumns] = React.useState<number | null>(null);
 
@@ -54,6 +55,28 @@ const Gallery: React.FC<GalleryProps> = ({
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  // close menu on escape or when selection changes
+  React.useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpenMenuForId(null);
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  // close menu when clicking outside cards
+  React.useEffect(() => {
+    function onDocClick(e: MouseEvent) {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+      if (!target.closest('.gallery-card') && !target.closest('.mini-list-row') && !target.closest('.mini-action-menu')) {
+        setOpenMenuForId(null);
+      }
+    }
+    window.addEventListener('click', onDocClick);
+    return () => window.removeEventListener('click', onDocClick);
   }, []);
 
   // Enforce minimum columns per image size when the container is narrow.
@@ -172,13 +195,20 @@ const Gallery: React.FC<GalleryProps> = ({
         >
           {miniatures.map((mini, index) => {
             const isSelected = selectedIds.has(mini.id);
+            const isMenuOpen = openMenuForId === mini.id;
             return (
               <div
                 key={mini.id}
                 className={`gallery-card ${isSelected ? 'selected' : ''}`}
-                onClick={(e) => onCardClick(mini, index, (e as any).shiftKey)}
+                onClick={(e) => {
+                  if (selectedIds.size > 0) {
+                    onCardClick(mini, index, (e as any).shiftKey);
+                    return;
+                  }
+                  if (isMenuOpen) return;
+                  setOpenMenuForId(mini.id);
+                }}
               >
-                {isSelected && <div className="selection-checkmark">✓</div>}
                 <div className="card-image-container">
                   <img
                     src={mini.image_data}
@@ -190,30 +220,40 @@ const Gallery: React.FC<GalleryProps> = ({
                     style={{ imageRendering: 'auto' }}
                   />
                   {mini.painted && <span className="painted-badge">🎨</span>}
-                  <button
-                    className="btn-edit-round"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      onEdit(mini);
-                    }}
-                    aria-label={`Edit ${mini.name || 'miniature'}`}
-                    type="button"
-                  >
-                    ✏️
-                  </button>
-                  <button
-                    className="btn-view-round"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setPreviewImage(mini.image_data);
-                    }}
-                    aria-label={`View ${mini.name || 'miniature'}`}
-                    type="button"
-                  >
-                    👁️
-                  </button>
+                  {isMenuOpen && (
+                    <div className="mini-action-menu" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        className="menu-btn"
+                        onClick={() => {
+                          onCardClick(mini, index, false);
+                          setOpenMenuForId(null);
+                        }}
+                        type="button"
+                      >
+                        Select
+                      </button>
+                      <button
+                        className="menu-btn"
+                        onClick={() => {
+                          setPreviewImage(mini.image_data);
+                          setOpenMenuForId(null);
+                        }}
+                        type="button"
+                      >
+                        View
+                      </button>
+                      <button
+                        className="menu-btn"
+                        onClick={() => {
+                          onEdit(mini);
+                          setOpenMenuForId(null);
+                        }}
+                        type="button"
+                      >
+                        Edit
+                      </button>
+                    </div>
+                  )}
                 </div>
                 {showAny && (
                   <div className="card-content">
@@ -277,11 +317,19 @@ const Gallery: React.FC<GalleryProps> = ({
               </div>
               {miniatures.map((mini, index) => {
                 const isSelected = selectedIds.has(mini.id);
+                const isMenuOpen = openMenuForId === mini.id;
                 return (
                   <div
                     key={mini.id}
                     className={`mini-list-row ${isSelected ? 'selected' : ''}`}
-                    onClick={(e) => onCardClick(mini, index, (e as any).shiftKey)}
+                    onClick={(e) => {
+                      if (selectedIds.size > 0) {
+                        onCardClick(mini, index, (e as any).shiftKey);
+                        return;
+                      }
+                      if (isMenuOpen) return;
+                      setOpenMenuForId(mini.id);
+                    }}
                   >
                     <div className="col-img">
                       <div className="mini-img-wrap">
@@ -293,9 +341,13 @@ const Gallery: React.FC<GalleryProps> = ({
                           data-cache={cacheTimestamp}
                           style={{ imageRendering: 'auto' }}
                         />
-                        {isSelected && <div className="mini-selection-checkmark">✓</div>}
-                        <button className="btn-edit-round" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onEdit(mini); }} aria-label={`Edit ${mini.name || 'miniature'}`} type="button">✏️</button>
-                        <button className="btn-view-round" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPreviewImage(mini.image_data); }} aria-label={`View ${mini.name || 'miniature'}`} type="button">👁️</button>
+                        {isMenuOpen && (
+                          <div className="mini-action-menu" onClick={(e) => e.stopPropagation()}>
+                            <button className="menu-btn" onClick={() => { onCardClick(mini, index, false); setOpenMenuForId(null); }} type="button">Select</button>
+                            <button className="menu-btn" onClick={() => { setPreviewImage(mini.image_data); setOpenMenuForId(null); }} type="button">View</button>
+                            <button className="menu-btn" onClick={() => { onEdit(mini); setOpenMenuForId(null); }} type="button">Edit</button>
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className="col-name">{showName ? (mini.name || 'Unnamed') : ''}</div>
@@ -334,11 +386,19 @@ const Gallery: React.FC<GalleryProps> = ({
               </div>
               {miniatures.map((mini, index) => {
                 const isSelected = selectedIds.has(mini.id);
+                const isMenuOpen = openMenuForId === mini.id;
                 return (
                   <div
                     key={mini.id}
                     className={`mini-list-row ${isSelected ? 'selected' : ''}`}
-                    onClick={(e) => onCardClick(mini, index, (e as any).shiftKey)}
+                    onClick={(e) => {
+                      if (selectedIds.size > 0) {
+                        onCardClick(mini, index, (e as any).shiftKey);
+                        return;
+                      }
+                      if (isMenuOpen) return;
+                      setOpenMenuForId(mini.id);
+                    }}
                   >
                     <div className="col-img">
                       <div className="mini-img-wrap">
@@ -350,9 +410,13 @@ const Gallery: React.FC<GalleryProps> = ({
                           data-cache={cacheTimestamp}
                           style={{ imageRendering: 'auto' }}
                         />
-                        {isSelected && <div className="mini-selection-checkmark">✓</div>}
-                        <button className="btn-edit-round" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onEdit(mini); }} aria-label={`Edit ${mini.name || 'miniature'}`} type="button">✏️</button>
-                        <button className="btn-view-round" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPreviewImage(mini.image_data); }} aria-label={`View ${mini.name || 'miniature'}`} type="button">👁️</button>
+                        {isMenuOpen && (
+                          <div className="mini-action-menu" onClick={(e) => e.stopPropagation()}>
+                            <button className="menu-btn" onClick={() => { onCardClick(mini, index, false); setOpenMenuForId(null); }} type="button">Select</button>
+                            <button className="menu-btn" onClick={() => { setPreviewImage(mini.image_data); setOpenMenuForId(null); }} type="button">View</button>
+                            <button className="menu-btn" onClick={() => { onEdit(mini); setOpenMenuForId(null); }} type="button">Edit</button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

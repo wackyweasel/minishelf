@@ -66,12 +66,19 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
+/* Selection checkmarks removed — keep hidden in case markup lingers */
+.selection-checkmark,
+.mini-selection-checkmark {
+  display: none !important;
+}
+
 .card-image-container {
   position: relative;
   width: 100%;
   padding-top: 100%;
   background: #24282b;
-  overflow: hidden;
+  /* allow the action menu to render outside the image box */
+  overflow: visible;
 }
 
 .card-image-container .btn-edit-round {
@@ -91,19 +98,50 @@
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(0,0,0,0.4);
   transition: all 0.18s ease;
-  opacity: 0;
-  transform: translateY(-4px);
-  pointer-events: none;
+  /* hide legacy buttons; new menu replaces them */
+  opacity: 0 !important;
+  transform: translateY(0) !important;
+  pointer-events: none !important;
   z-index: 12;
 }
 
-.card-image-container:hover .btn-edit-round,
-.card-image-container:hover .btn-view-round,
-.mini-img-wrap:hover .btn-edit-round,
-.mini-img-wrap:hover .btn-view-round {
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events: auto;
+/* Hide legacy round buttons entirely */
+.card-image-container .btn-view-round,
+.card-image-container .btn-edit-round,
+.mini-img-wrap .btn-view-round,
+.mini-img-wrap .btn-edit-round {
+  display: none !important;
+}
+
+/* Small action menu shown when first-clicking a card */
+.mini-action-menu {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(20,24,28,0.96);
+  padding: 6px;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  z-index: 1100; /* high so it appears above other cards */
+}
+
+.mini-action-menu .menu-btn {
+  background: transparent;
+  color: #e8eef6;
+  border: 1px solid rgba(255,255,255,0.04);
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.mini-action-menu .menu-btn:hover {
+  background: rgba(127, 179, 213, 0.08);
+  color: #4aa3c6;
+  border-color: rgba(74,163,198,0.12);
 }
 
 .btn-view-round {
