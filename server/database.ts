@@ -53,6 +53,7 @@ export async function initDatabase() {
         amount INTEGER NOT NULL DEFAULT 1,
         painted INTEGER NOT NULL DEFAULT 0,
         keywords TEXT NOT NULL DEFAULT '',
+        embedding TEXT,
         image_path TEXT NOT NULL,
         thumbnail_path TEXT,
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -67,6 +68,14 @@ export async function initDatabase() {
     db.run(`
       CREATE INDEX IF NOT EXISTS idx_painted ON miniatures(painted)
     `);
+
+    // Migration: Add embedding column if it doesn't exist
+    try {
+      db.run("ALTER TABLE miniatures ADD COLUMN embedding TEXT");
+      console.log("Added embedding column to miniatures table");
+    } catch (e) {
+      // Column likely already exists, ignore
+    }
 
     // Save database
     saveDatabase();

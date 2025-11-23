@@ -189,7 +189,11 @@ const Gallery: React.FC<GalleryProps> = ({
           className={`gallery gallery-${imageSize}`}
           style={
             computedColumns && imageSize !== 'large'
-              ? { gridTemplateColumns: `repeat(${computedColumns}, minmax(0, 1fr))` }
+              ? (() => {
+                  const pxForSize: Record<string, number> = { tiny: 110, small: 150, medium: 200 };
+                  const px = pxForSize[imageSize] || 150;
+                  return { gridTemplateColumns: `repeat(${computedColumns}, ${px}px)` };
+                })()
               : undefined
           }
         >

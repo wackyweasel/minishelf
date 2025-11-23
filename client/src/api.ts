@@ -7,6 +7,7 @@ export interface Miniature {
   amount: number;
   painted: boolean;
   keywords: string;
+  embedding?: number[];
   image_data: string;
   // thumbnail_data removed
   created_at: string;

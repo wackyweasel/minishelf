@@ -248,11 +248,27 @@ router.get('/', (req: Request, res: Response) => {
     }
     stmt.free();
 
-    // Convert painted from 0/1 to boolean
-    const result = miniatures.map((mini: any) => ({
-      ...mini,
-      painted: mini.painted === 1
-    }));
+    // Convert painted from 0/1 to boolean and parse embedding
+    const result = miniatures.map((mini: any) => {
+      let embedding = undefined;
+      if (mini.embedding) {
+        try {
+          // If it's already an object (unlikely with sql.js but possible if driver changed), use it
+          if (typeof mini.embedding === 'object') {
+            embedding = mini.embedding;
+          } else if (typeof mini.embedding === 'string') {
+            embedding = JSON.parse(mini.embedding);
+          }
+        } catch (e) {
+          console.error('Failed to parse embedding for mini', mini.id);
+        }
+      }
+      return {
+        ...mini,
+        painted: mini.painted === 1,
+        embedding
+      };
+    });
 
     res.json(result);
   } catch (error) {
@@ -320,6 +336,11 @@ router.put('/:id', express.json(), (req: Request, res: Response) => {
       fields.push('keywords = ?');
       values.push(updates.keywords);
     }
+    if (updates.embedding !== undefined) {
+      fields.push('embedding = ?');
+      values.push(JSON.stringify(updates.embedding));
+      console.log(`Updating embedding for ${id}, length: ${updates.embedding.length}`);
+    }
 
     if (fields.length === 0) {
       return res.status(400).json({ error: 'No fields to update' });
@@ -329,7 +350,25 @@ router.put('/:id', express.json(), (req: Request, res: Response) => {
     values.push(id);
 
     const query = `UPDATE miniatures SET ${fields.join(', ')} WHERE id = ?`;
+    
+    // Ensure values are in correct order (fields first, then id)
+    // The values array already has the field values pushed in order
+    // We just need to make sure 'id' is the last one, which it is.
+    
     db.run(query, values);
+    
+    // Verify the update
+    const verifyStmt = db.prepare('SELECT embedding FROM miniatures WHERE id = ?');
+    verifyStmt.bind([id]);
+    if (verifyStmt.step()) {
+      const row = verifyStmt.getAsObject();
+      if (updates.embedding && !row.embedding) {
+        console.error('CRITICAL: Embedding was NOT saved for', id);
+      } else if (updates.embedding) {
+         console.log('Verified embedding saved for', id);
+      }
+    }
+    verifyStmt.free();
 
     saveDatabase();
     res.json({ message: 'Miniature updated successfully' });

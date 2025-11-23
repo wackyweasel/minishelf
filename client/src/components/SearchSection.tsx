@@ -11,6 +11,8 @@ interface SearchSectionProps {
   onSearchChange: (term: string) => void;
   resultCount: number;
   onToggleSidebar: () => void;
+  isAiSearchEnabled: boolean;
+  onToggleAiSearch: (enabled: boolean) => void;
 }
 
 const SearchSection: React.FC<SearchSectionProps> = ({
@@ -18,15 +20,27 @@ const SearchSection: React.FC<SearchSectionProps> = ({
   onSearchChange,
   resultCount,
   onToggleSidebar,
+  isAiSearchEnabled,
+  onToggleAiSearch,
 }) => {
   return (
     <div className="search-section">
       <div className="search-header">
         <div className="search-container">
+          <div className="ai-search-toggle">
+            <label title="Enable AI Semantic Search">
+              <input
+                type="checkbox"
+                checked={isAiSearchEnabled}
+                onChange={(e) => onToggleAiSearch(e.target.checked)}
+              />
+              <span className="ai-label">AI Search</span>
+            </label>
+          </div>
           <input
             type="text"
             className="search-input"
-            placeholder="Search by keywords, name, or game (e.g., 'woman, sword')"
+            placeholder={isAiSearchEnabled ? "What are you looking for?" : "Search by keywords, name, or game (e.g., 'woman, sword')"}
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
           />

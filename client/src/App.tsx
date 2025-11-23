@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { api, Miniature } from './api';
 import { initDatabase } from './database';
 import { parseKeywords } from './utils/keywords';
@@ -11,6 +11,8 @@ import ViewOptionsSidebar from './components/ViewOptionsSidebar';
 import './App.css';
 import { notify } from './utils/notify';
 import { confirmAction } from './utils/confirm';
+import { generateImageEmbedding, generateTextEmbedding, cosineSimilarity } from './utils/clip';
+import './components/EmbeddingProgress.css';
 
 // Load setting from localStorage with fallback
 const loadSetting = <T,>(key: string, defaultValue: T): T => {
@@ -51,6 +53,10 @@ function App() {
   const [dbInitialized, setDbInitialized] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
+  const [isAiSearchEnabled, setIsAiSearchEnabled] = useState(false);
+  const [isGeneratingEmbeddings, setIsGeneratingEmbeddings] = useState(false);
+  const [embeddingProgress, setEmbeddingProgress] = useState({ current: 0, total: 0 });
+  const embeddingCancelRef = useRef(false);
 
   // Initialize database on app load
   useEffect(() => {
@@ -92,21 +98,134 @@ function App() {
     saveSetting('showName', showName);
   }, [showName]);
 
+  // Debounce AI search to avoid blocking on every keystroke
   useEffect(() => {
     if (dbInitialized) {
-      loadMiniatures();
+      // Add debounce for AI search
+      if (isAiSearchEnabled && searchTerm) {
+        const timeoutId = setTimeout(() => {
+          loadMiniatures();
+        }, 300); // 300ms delay
+        return () => clearTimeout(timeoutId);
+      } else {
+        loadMiniatures();
+      }
     }
-  }, [searchTerm, dbInitialized]);
+  }, [searchTerm, dbInitialized, isAiSearchEnabled]);
 
   const loadMiniatures = async () => {
     try {
       setLoading(true);
-      const data = await api.getMiniatures({ search: searchTerm || undefined });
-      setMiniatures(sortMiniatures(data, sortBy));
+      
+      if (isAiSearchEnabled && searchTerm) {
+        // Fetch all to do client-side filtering
+        const data = await api.getMiniatures({});
+        
+        // Generate query embedding
+        try {
+          const queryEmbedding = await generateTextEmbedding(searchTerm);
+          
+          // Score and sort
+          const scored = data.map(mini => {
+            if (!mini.embedding) return { ...mini, score: -1 };
+            return { ...mini, score: cosineSimilarity(queryEmbedding, mini.embedding) };
+          });
+          
+          // Sort by score desc
+          scored.sort((a: any, b: any) => b.score - a.score);
+          
+          // Filter by threshold - typical CLIP scores range 0-1, threshold ~0.2-0.25 works well
+          const SIMILARITY_THRESHOLD = 0.2;
+          let filtered = scored.filter((m: any) => m.score >= SIMILARITY_THRESHOLD);
+
+          // If there are fewer than 10 results above threshold, include top-scoring items
+          // (excluding those with score < 0 which indicates missing embedding) until
+          // we reach up to 10 results or exhaust available items.
+          const MIN_AI_RESULTS = 10;
+          if (filtered.length < MIN_AI_RESULTS) {
+            const additional = scored
+              .filter((m: any) => m.score >= 0 && !filtered.find((f: any) => f.id === m.id))
+              .slice(0, Math.max(0, MIN_AI_RESULTS - filtered.length));
+            filtered = filtered.concat(additional);
+          }
+
+          setMiniatures(filtered);
+        } catch (err) {
+          console.error('AI Search failed:', err);
+          notify.error('AI Search failed. Please try again.');
+          // Fallback to normal search? Or just show empty?
+          setMiniatures([]);
+        }
+      } else {
+        const data = await api.getMiniatures({ search: searchTerm || undefined });
+        // If AI search is enabled but no search term, we still want to show all miniatures
+        // but maybe sorted by update time or whatever the user selected
+        setMiniatures(sortMiniatures(data, sortBy));
+      }
     } catch (error) {
       console.error('Failed to load miniatures:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleToggleAiSearch = async (enabled: boolean) => {
+    setIsAiSearchEnabled(enabled);
+    if (enabled) {
+      // Check for missing embeddings
+      try {
+        // We need to fetch all miniatures to check embeddings, ignoring current search filters
+        const allMinis = await api.getMiniatures({});
+        
+        // Check if embedding is present and is a valid array
+        const missing = allMinis.filter(m => {
+          const hasEmbedding = m.embedding && Array.isArray(m.embedding) && m.embedding.length > 0;
+          return !hasEmbedding;
+        });
+        
+        console.log(`Found ${missing.length} missing embeddings out of ${allMinis.length} total.`);
+        
+        if (missing.length > 0) {
+          const confirmed = await confirmAction(
+            `Found ${missing.length} miniatures without AI embeddings. Generate them now? This may take a while.`
+          );
+          
+          if (confirmed) {
+            embeddingCancelRef.current = false;
+            setIsGeneratingEmbeddings(true);
+            setEmbeddingProgress({ current: 0, total: missing.length });
+
+            // Process in chunks to avoid blocking UI too much, though await helps
+            for (let i = 0; i < missing.length; i++) {
+              if (embeddingCancelRef.current) {
+                // User requested cancellation
+                console.log('Embedding generation cancelled by user');
+                break;
+              }
+              const mini = missing[i];
+              try {
+                const embedding = await generateImageEmbedding(mini.image_data);
+                await api.updateMiniature(mini.id, { embedding });
+                setEmbeddingProgress(prev => ({ ...prev, current: i + 1 }));
+              } catch (err) {
+                console.error(`Failed to generate embedding for ${mini.id}`, err);
+              }
+            }
+
+            const wasCancelled = embeddingCancelRef.current;
+            setIsGeneratingEmbeddings(false);
+            if (wasCancelled) {
+              notify.success('Embedding generation stopped. Some embeddings may be missing.');
+            } else {
+              notify.success('Embeddings generated successfully!');
+            }
+            // Reload to get the new embeddings (partial if cancelled)
+            loadMiniatures();
+          }
+        }
+      } catch (err) {
+        console.error('Failed to check embeddings:', err);
+      }
     }
   };
 
@@ -383,7 +502,35 @@ function App() {
               onSearchChange={setSearchTerm}
               resultCount={miniatures.length}
               onToggleSidebar={() => setSidebarOpen(true)}
+              isAiSearchEnabled={isAiSearchEnabled}
+              onToggleAiSearch={handleToggleAiSearch}
             />
+            
+            {isGeneratingEmbeddings && (
+              <div className="embedding-progress-overlay">
+                <div className="embedding-progress-content">
+                  <h3>Generating AI Embeddings...</h3>
+                  <div className="progress-bar-container">
+                    <div 
+                      className="progress-bar-fill" 
+                      style={{ width: `${(embeddingProgress.current / embeddingProgress.total) * 100}%` }}
+                    ></div>
+                  </div>
+                  <p>{embeddingProgress.current} / {embeddingProgress.total}</p>
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <button
+                      type="button"
+                      className="btn-delete"
+                      onClick={() => {
+                        embeddingCancelRef.current = true;
+                      }}
+                    >
+                      Stop
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
             <Gallery
               miniatures={miniatures}
               loading={loading}

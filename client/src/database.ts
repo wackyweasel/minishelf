@@ -43,6 +43,7 @@ export interface Miniature {
   amount: number;
   painted: boolean;
   keywords: string;
+  embedding?: number[];
   image_data: string; // base64 encoded image
   // thumbnail_data removed
   created_at: string;
@@ -100,6 +101,7 @@ export async function initDatabase(): Promise<void> {
         amount INTEGER NOT NULL DEFAULT 1,
         painted INTEGER NOT NULL DEFAULT 0,
         keywords TEXT NOT NULL DEFAULT '',
+        embedding TEXT,
         image_data TEXT NOT NULL,
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -113,6 +115,14 @@ export async function initDatabase(): Promise<void> {
     db!.run(`
       CREATE INDEX IF NOT EXISTS idx_painted ON miniatures(painted)
     `);
+
+    // Migration: Add embedding column if it doesn't exist
+    try {
+      db!.run("ALTER TABLE miniatures ADD COLUMN embedding TEXT");
+      console.log("Added embedding column to client database");
+    } catch (e) {
+      // Column likely already exists, ignore
+    }
   };
 
   try {
@@ -366,6 +376,14 @@ export async function getAllMiniatures(filters?: {
   const results: Miniature[] = [];
   while (stmt.step()) {
     const row = stmt.getAsObject();
+    let embedding = undefined;
+    if (row.embedding) {
+      try {
+        embedding = JSON.parse(row.embedding as string);
+      } catch (e) {
+        console.error('Failed to parse embedding');
+      }
+    }
     const mini = {
       id: row.id as string,
       game: row.game as string,
@@ -373,6 +391,7 @@ export async function getAllMiniatures(filters?: {
       amount: row.amount as number,
       painted: row.painted === 1,
       keywords: row.keywords as string,
+      embedding,
       image_data: row.image_data as string,
       // thumbnail_data removed
       created_at: row.created_at as string,
@@ -398,6 +417,14 @@ export async function getMiniature(id: string): Promise<Miniature | null> {
   if (stmt.step()) {
     const row = stmt.getAsObject();
     stmt.free();
+    let embedding = undefined;
+    if (row.embedding) {
+      try {
+        embedding = JSON.parse(row.embedding as string);
+      } catch (e) {
+        console.error('Failed to parse embedding');
+      }
+    }
     return {
       id: row.id as string,
       game: row.game as string,
@@ -405,6 +432,7 @@ export async function getMiniature(id: string): Promise<Miniature | null> {
       amount: row.amount as number,
       painted: row.painted === 1,
       keywords: row.keywords as string,
+      embedding,
       image_data: row.image_data as string,
   // thumbnail_data removed
       created_at: row.created_at as string,
@@ -439,6 +467,10 @@ export async function updateMiniature(id: string, updates: Partial<Miniature>): 
   if (updates.keywords !== undefined) {
     fields.push('keywords = ?');
     values.push(updates.keywords);
+  }
+  if (updates.embedding !== undefined) {
+    fields.push('embedding = ?');
+    values.push(JSON.stringify(updates.embedding));
   }
   if (updates.image_data !== undefined) {
     fields.push('image_data = ?');
