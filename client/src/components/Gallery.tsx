@@ -106,9 +106,18 @@ const Gallery: React.FC<GalleryProps> = ({
       const thumbMin = thumbMinWidthForSize[imageSize] || 150;
       const thumbMax = thumbMaxWidthForSize[imageSize] || 340;
 
+      // Minimum columns per row based on image size
+      const minColsPerSize: Record<string, number> = {
+        tiny: 4,
+        small: 3,
+        medium: 2,
+        large: 1,
+      };
+      const minCols = minColsPerSize[imageSize] || 1;
+
       // columns that fit at thumbMin width
-      const colsFit = Math.max(1, Math.floor(w / thumbMin));
-      const cols = Math.min(colsFit, Math.max(1, miniatures.length));
+      const colsFit = Math.max(minCols, Math.floor(w / thumbMin));
+      const cols = Math.min(colsFit, Math.max(minCols, miniatures.length));
 
       const avgWidth = w / Math.max(1, cols);
 
