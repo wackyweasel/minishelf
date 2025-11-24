@@ -37,11 +37,18 @@
 .gallery-card {
   background: rgba(230, 235, 240, 0.03);
   border-radius: 12px;
-  overflow: hidden;
+  overflow: visible;
   transition: all 0.3s ease;
   border: 2px solid transparent;
   position: relative;
   cursor: pointer;
+}
+
+/* When a card has an open menu, make sure it stacks above others */
+.gallery-card.menu-open {
+  z-index: 1200;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.35);
+  transform: translateY(-6px);
 }
 
 .gallery-card:hover {
@@ -54,6 +61,16 @@
   border-color: rgba(127, 179, 213, 0.9);
   background: rgba(127, 179, 213, 0.08);
   box-shadow: 0 4px 12px rgba(76, 134, 162, 0.16);
+  outline: 1px solid rgba(127, 179, 213, 0.9);
+  outline-offset: 0px;
+}
+
+.gallery-card.selected:hover {
+  transform: translateY(-4px);
+  border-color: rgba(127, 179, 213, 0.9);
+  box-shadow: 0 8px 16px rgba(76, 134, 162, 0.2);
+  outline: 3px solid rgba(127, 179, 213, 0.9);
+  outline-offset: 1px;
 }
 
 .selection-checkmark {
@@ -87,6 +104,7 @@
   background: #24282b;
   /* allow the action menu to render outside the image box */
   overflow: visible;
+  border-radius: 12px 12px 0 0;
 }
 
 .card-image-container .btn-edit-round {
@@ -242,6 +260,13 @@
   object-fit: cover;
   cursor: pointer;
   transition: transform 0.3s ease;
+  border-radius: 12px 12px 0 0;
+}
+
+/* If the card has no bottom content, ensure the card keeps bottom rounding */
+.gallery-card.no-content .card-image-container,
+.gallery-card.no-content .card-image {
+  border-radius: 12px;
 }
 
 .card-image:hover {
@@ -583,6 +608,7 @@
   gap: 1rem;
   padding: 0.75rem 1rem;
   border-bottom: 1px solid rgba(59, 67, 74, 0.06);
+  overflow: visible;
 }
 .mini-list-header {
   background: rgba(127, 179, 213, 0.03);
@@ -651,6 +677,7 @@
 .mini-img-wrap {
   position: relative;
   display: inline-block;
+  overflow: visible;
 }
 
 .mini-img-wrap img {
@@ -658,6 +685,17 @@
   width: 100%;
   height: auto;
   border-radius: 6px;
+}
+
+/* When a list row has an open menu, bring it above others */
+.mini-list-row.menu-open {
+  position: relative;
+  z-index: 1200;
+}
+
+/* If the list row has no extra content, make image corners fully rounded */
+.mini-list-row.no-content .mini-img-wrap img {
+  border-radius: 8px;
 }
 
 .mini-selection-checkmark {
