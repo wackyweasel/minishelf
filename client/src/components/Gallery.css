@@ -35,23 +35,39 @@
 }
 
 .gallery-card {
-  background: rgba(230, 235, 240, 0.03);
-  border-radius: 12px;
-  overflow: hidden;
-  transition: all 0.3s ease;
-  border: 2px solid transparent;
+  /* allow children (menus) to escape while keeping visual chrome on inner box */
   position: relative;
   cursor: pointer;
+  border: 2px solid transparent; /* outline preserved on outer element */
+  transition: transform 0.25s ease; /* keep transform on outer for lift effect */
+  overflow: visible; /* let dropdowns render outside */
+}
+
+/* Inner element holds the rounded background and clipping so the
+   outer `.gallery-card` can allow overflow for menus without
+   breaking rounded corners or inner content clipping. */
+.gallery-card-inner {
+  background: rgba(230, 235, 240, 0.03);
+  border-radius: 12px;
+  overflow: hidden; /* clip images/content to rounded corners */
+  transition: all 0.3s ease;
+  position: relative;
 }
 
 .gallery-card:hover {
   transform: translateY(-4px);
   border-color: rgba(127, 179, 213, 0.6);
+}
+
+.gallery-card:hover .gallery-card-inner {
   box-shadow: 0 8px 16px rgba(76, 134, 162, 0.12);
 }
 
 .gallery-card.selected {
   border-color: rgba(127, 179, 213, 0.9);
+}
+
+.gallery-card.selected .gallery-card-inner {
   background: rgba(127, 179, 213, 0.08);
   box-shadow: 0 4px 12px rgba(76, 134, 162, 0.16);
 }
@@ -712,7 +728,5 @@
 /* Ensure grid selected styles match list emphasis */
 .gallery-card.selected {
   border-color: rgba(127, 179, 213, 0.9);
-  background: rgba(127, 179, 213, 0.12);
-  box-shadow: 0 8px 16px rgba(76, 134, 162, 0.12);
 }
 

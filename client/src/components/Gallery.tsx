@@ -108,7 +108,7 @@ const Gallery: React.FC<GalleryProps> = ({
 
       // Minimum columns per row based on image size
       const minColsPerSize: Record<string, number> = {
-        tiny: 5,
+        tiny: 4,
         small: 3,
         medium: 2,
         large: 1,
@@ -223,6 +223,7 @@ const Gallery: React.FC<GalleryProps> = ({
                   setOpenMenuForId(mini.id);
                 }}
               >
+                <div className="gallery-card-inner">
                 <div className="card-image-container">
                   <img
                     src={mini.image_data}
@@ -234,41 +235,8 @@ const Gallery: React.FC<GalleryProps> = ({
                     style={{ imageRendering: 'auto' }}
                   />
                   {mini.painted && <span className="painted-badge">🎨</span>}
-                  {isMenuOpen && (
-                    <div className="mini-action-menu" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        className="menu-btn"
-                        onClick={() => {
-                          onCardClick(mini, index, false);
-                          setOpenMenuForId(null);
-                        }}
-                        type="button"
-                      >
-                        Select
-                      </button>
-                      <button
-                        className="menu-btn"
-                        onClick={() => {
-                          setPreviewImage(mini.image_data);
-                          setOpenMenuForId(null);
-                        }}
-                        type="button"
-                      >
-                        View
-                      </button>
-                      <button
-                        className="menu-btn"
-                        onClick={() => {
-                          onEdit(mini);
-                          setOpenMenuForId(null);
-                        }}
-                        type="button"
-                      >
-                        Edit
-                      </button>
-                    </div>
-                  )}
                 </div>
+              </div>
                 {showAny && (
                   <div className="card-content">
                   <h3 className="card-title">
@@ -311,6 +279,40 @@ const Gallery: React.FC<GalleryProps> = ({
                     <div className="card-actions">
                       {/* actions remain here if we want extras later */}
                     </div>
+                  </div>
+                )}
+                {isMenuOpen && (
+                  <div className="mini-action-menu" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      className="menu-btn"
+                      onClick={() => {
+                        onCardClick(mini, index, false);
+                        setOpenMenuForId(null);
+                      }}
+                      type="button"
+                    >
+                      Select
+                    </button>
+                    <button
+                      className="menu-btn"
+                      onClick={() => {
+                        setPreviewImage(mini.image_data);
+                        setOpenMenuForId(null);
+                      }}
+                      type="button"
+                    >
+                      View
+                    </button>
+                    <button
+                      className="menu-btn"
+                      onClick={() => {
+                        onEdit(mini);
+                        setOpenMenuForId(null);
+                      }}
+                      type="button"
+                    >
+                      Edit
+                    </button>
                   </div>
                 )}
               </div>
