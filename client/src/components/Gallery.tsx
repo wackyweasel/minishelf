@@ -108,7 +108,7 @@ const Gallery: React.FC<GalleryProps> = ({
 
       // Minimum columns per row based on image size
       const minColsPerSize: Record<string, number> = {
-        tiny: 4,
+        tiny: 5,
         small: 3,
         medium: 2,
         large: 1,
