@@ -213,7 +213,7 @@ const Gallery: React.FC<GalleryProps> = ({
             return (
               <div
                 key={mini.id}
-                className={`gallery-card ${isSelected ? 'selected' : ''} ${isMenuOpen ? 'menu-open' : ''} ${showAny ? 'has-content' : 'no-content'}`}
+                className={`gallery-card ${isSelected ? 'selected' : ''}`}
                 onClick={(e) => {
                   if (selectedIds.size > 0) {
                     onCardClick(mini, index, (e as any).shiftKey);
@@ -335,7 +335,7 @@ const Gallery: React.FC<GalleryProps> = ({
                 return (
                   <div
                     key={mini.id}
-                    className={`mini-list-row ${isSelected ? 'selected' : ''} ${isMenuOpen ? 'menu-open' : ''} ${showAny ? 'has-content' : 'no-content'}`}
+                    className={`mini-list-row ${isSelected ? 'selected' : ''}`}
                     onClick={(e) => {
                       if (selectedIds.size > 0) {
                         onCardClick(mini, index, (e as any).shiftKey);
