@@ -46,7 +46,22 @@ const Gallery: React.FC<GalleryProps> = ({
   const [previewImage, setPreviewImage] = React.useState<string | null>(null);
   const [openMenuForId, setOpenMenuForId] = React.useState<string | null>(null);
   const containerRef = React.useRef<HTMLDivElement | null>(null);
-  const [computedColumns, setComputedColumns] = React.useState<number | null>(null);
+  const [gridStyle, setGridStyle] = React.useState<React.CSSProperties | undefined>(undefined);
+
+  // Thumbnail sizing presets used when rendering the grid.
+  const thumbMinWidthForSize: Record<string, number> = {
+    tiny: 110,
+    small: 150,
+    medium: 200,
+    large: 280,
+  };
+
+  const thumbMaxWidthForSize: Record<string, number> = {
+    tiny: 180,
+    small: 260,
+    medium: 340,
+    large: 560,
+  };
 
   // close on escape
   React.useEffect(() => {
@@ -79,46 +94,31 @@ const Gallery: React.FC<GalleryProps> = ({
     return () => window.removeEventListener('click', onDocClick);
   }, []);
 
-  // Enforce minimum columns per image size when the container is narrow.
+  // Compute grid style to either evenly stretch columns to fill the row
+  // or clamp thumbnails to a maximum size and left-align when they would grow too large.
   React.useEffect(() => {
     if (!containerRef.current) return;
-
-    const minColsForSize: Record<string, number | null> = {
-      tiny: 4,
-      small: 3,
-      medium: 2,
-      large: null,
-    };
-
-    // Approximate desired thumbnail width per size (should match CSS minmax values)
-    const thumbMinWidthForSize: Record<string, number> = {
-      tiny: 110, // matches Gallery.css .gallery-tiny
-      small: 150,
-      medium: 200,
-      large: 280,
-    };
 
     function recompute() {
       const el = containerRef.current;
       if (!el) return;
       const w = el.clientWidth || el.getBoundingClientRect().width;
-
-      const minCols = minColsForSize[imageSize] ?? null;
-      if (!minCols) {
-        // no minimum for large
-        setComputedColumns(null);
-        return;
-      }
-
       const thumbMin = thumbMinWidthForSize[imageSize] || 150;
+      const thumbMax = thumbMaxWidthForSize[imageSize] || 340;
 
       // columns that fit at thumbMin width
       const colsFit = Math.max(1, Math.floor(w / thumbMin));
+      const cols = Math.min(colsFit, Math.max(1, miniatures.length));
 
-      // Desired columns is at least the minimum, but don't exceed items available.
-      const desired = Math.max(minCols, colsFit);
-      const cols = Math.min(desired, Math.max(1, miniatures.length));
-      setComputedColumns(cols);
+      const avgWidth = w / Math.max(1, cols);
+
+      if (avgWidth <= thumbMax) {
+        // evenly distribute columns to fill the row exactly
+        setGridStyle({ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` });
+      } else {
+        // keep thumbnails under max width and left-align
+        setGridStyle({ gridTemplateColumns: `repeat(auto-fit, minmax(${thumbMin}px, ${thumbMax}px))`, justifyContent: 'start' });
+      }
     }
 
     recompute();
@@ -126,6 +126,8 @@ const Gallery: React.FC<GalleryProps> = ({
     ro.observe(containerRef.current);
     return () => ro.disconnect();
   }, [imageSize, miniatures.length, viewMode]);
+
+  
   if (loading) {
     return (
       <div className="gallery-loading">
@@ -188,8 +190,11 @@ const Gallery: React.FC<GalleryProps> = ({
           ref={containerRef}
           className={`gallery gallery-${imageSize}`}
           style={
-            computedColumns && imageSize !== 'large'
-              ? { gridTemplateColumns: `repeat(${computedColumns}, minmax(0, 1fr))` }
+            imageSize !== 'large'
+              ? gridStyle ?? {
+                  gridTemplateColumns: `repeat(auto-fit, minmax(${thumbMinWidthForSize[imageSize]}px, ${thumbMaxWidthForSize[imageSize]}px))`,
+                  justifyContent: 'start',
+                }
               : undefined
           }
         >
